@@ -13,7 +13,7 @@ const (
 	summonerVersion = "v1.4"
 	statsVersion    = "v1.3"
 	champVersion    = "v1.2"
-	apiKey          = "f0fa5a3c-e718-4004-b264-b9a64fc7a444"
+	apiKey          = "SETME"
 )
 
 func makeUrl(version string, method string) string {

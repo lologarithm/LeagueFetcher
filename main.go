@@ -1,60 +1,22 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-)
-
-const (
-	baseUrl         = "https://prod.api.pvp.net/api/lol/"
-	region          = "na"
-	summonerVersion = "v1.4"
-	statsVersion    = "v1.3"
-	apiKey          = "?api_key=f0fa5a3c-e718-4004-b264-b9a64fc7a444"
 )
 
 func main() {
+	SetupCache()
 
-}
+	champ := GetChampion(5)
+	fmt.Printf("Champ: %v\n", champ)
 
-func getUrl(method string) string {
-	url := baseUrl + region + "/" + version + "/" + method + apiKey
-	fmt.Printf("URL: %s\n", url)
-	return url
-}
+	summoner := GetSummoner("lologarithm")
+	summoner2 := GetSummoner("comradetaters")
+	fmt.Printf("Summoner: %v\n", summoner)
+	fmt.Printf("Summoner2: %v\n", summoner2)
 
-func makeRequest(url string) []byte {
-	resp, err := http.Get(url)
-	if err != nil {
-		fmt.Printf("Failed to open conn: %s\n", err.Error())
-		return []byte{}
-	}
+	stats := getSummonerRankedStats(summoner.Id)
+	fmt.Printf("Stats: %v\n", stats)
 
-	body, bodyErr := ioutil.ReadAll(resp.Body)
-	if bodyErr != nil {
-		fmt.Printf("Failed to open conn: %s\n", err.Error())
-		return []byte{}
-	}
-	return body
-}
-
-func getSummonerByName(name string) (summoners map[string]Summoner) {
-	response := makeRequest(getUrl("summoner/by-name/" + name))
-
-	if len(response) == 0 {
-		return
-	}
-
-	unmarshErr := json.Unmarshal(response, &summoners)
-	if unmarshErr != nil {
-		fmt.Printf("Failed to unmarshal json: %s\n", unmarshErr.Error())
-	}
-
-	return
-}
-
-func getSummonerRankedStats(id int) {
-
+	SaveCache()
 }

@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
+	"time"
 )
 
 const (
@@ -85,17 +86,26 @@ func loadChampions(file string) {
 }
 
 func fetchAndCacheSummoner(name string) Summoner {
-	if _, ok := allSummoners[name]; !ok {
+
+	if summ, ok := allSummoners[name]; !ok {
 		// First check memcache if in appengine
-		summoners := getSummonerByName(name)
-		if s, gotOk := summoners[name]; gotOk {
-			allSummoners[name] = s
+		cacheSummoner(name)
+	} else {
+		// TODO: Make sure this works correctly
+		if summ.RevisionDate+10000000 < time.Now().Unix() {
+			cacheSummoner(name)
 		}
 	}
 	summ, _ := allSummoners[name]
 	return summ
 }
 
+func cacheSummoner(name string) {
+	summoners := getSummonerByName(name)
+	if s, gotOk := summoners[name]; gotOk {
+		allSummoners[name] = s
+	}
+}
 func fetchAndCacheChampion(id int64) Champion {
 	if allChampions == nil || len(allChampions) == 0 {
 		champs := getAllChampions()

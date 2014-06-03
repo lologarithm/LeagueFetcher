@@ -36,8 +36,14 @@ func main() {
 	go RunCache(exit, cacheRequests)
 
 	http.HandleFunc("/", defaultHandler)
-	// Wrap handler with closure that passes in the channel for cache requests.
+	// Wrap handlers with closure that passes in the channel for cache requests.
+
+	// Page requests
 	http.HandleFunc("/rankedStats", func(w http.ResponseWriter, req *http.Request) { handleRankedStats(w, req, cacheRequests) })
+
+	// JSON data api
+	http.HandleFunc("/api/champion", func(w http.ResponseWriter, req *http.Request) { handleChampion(w, req, cacheRequests) })
+	http.HandleFunc("/api/summoner/matchHistory", func(w http.ResponseWriter, req *http.Request) { handleRecentMatches(w, req, cacheRequests) })
 
 	http.ListenAndServe(":9000", nil)
 }
@@ -46,9 +52,49 @@ func defaultHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func handleRankedStats(w http.ResponseWriter, r *http.Request, cacheRequests chan CacheRequest) {
-	w.Write([]byte("<html><body><pre>"))
+func handleRecentMatches(w http.ResponseWriter, r *http.Request, cacheRequests chan CacheRequest) {
 	summoner, err := GetSummoner(r.FormValue("name"), cacheRequests)
+	if err != nil {
+		returnEmptyJson(w)
+		return
+	}
+	matches := getRecentMatches(summoner.Id)
+	matchJson, jsonErr := json.Marshal(matches)
+	if jsonErr != nil {
+		returnEmptyJson(w)
+		return
+	}
+	w.Write(matchJson)
+}
+
+func handleChampion(w http.ResponseWriter, r *http.Request, cacheRequests chan CacheRequest) {
+	fmt.Printf("R: %v", r)
+	champId, parseErr := strconv.ParseInt(r.FormValue("id"), 10, 64)
+	if parseErr != nil {
+		returnEmptyJson(w)
+		return
+	}
+	champ, err := GetChampion(champId, cacheRequests)
+	if err != nil {
+		returnEmptyJson(w)
+		return
+	}
+	champJson, jsonErr := json.Marshal(champ)
+	if jsonErr != nil {
+		returnEmptyJson(w)
+		return
+	}
+
+	w.Write(champJson)
+}
+
+func returnEmptyJson(w http.ResponseWriter) {
+	w.Write([]byte("{}"))
+}
+
+func handleRankedStats(w http.ResponseWriter, r *http.Request, cacheRequests chan CacheRequest) {
+	summoner, err := GetSummoner(r.FormValue("name"), cacheRequests)
+	w.Write([]byte("<html><body><pre>"))
 	if err == nil {
 		w.Write(GetRankedStats(summoner, cacheRequests))
 	}

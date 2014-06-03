@@ -24,6 +24,7 @@ const (
 	champVersion    = "v1.2"
 	leagueVersion   = "v2.4"
 	teamVersion     = "v2.3"
+	gameVersion     = "v1.3"
 )
 
 var apiKey string
@@ -91,6 +92,12 @@ func getSummonerTeams(id int64) (teams map[string][]Team) {
 func getAllChampions() (champs ChampionList) {
 	params := "&champData=all"
 	makeRequest(makeStaticDataUrl(champVersion, "champion", params), &champs)
+	return
+}
+
+func getRecentMatches(id int64) (r RecentGames) {
+	method := fmt.Sprintf("game/by-summoner/%d/recent", id)
+	makeRequest(makeUrl(gameVersion, method), &r)
 	return
 }
 

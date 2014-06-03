@@ -75,70 +75,70 @@ type ChampionSpell struct {
 }
 
 type ChampionInfo struct {
-	Id                int64 `json:"id"`
-	Active            bool  `json:"active"`
-	BotEnabled        bool  `json:"botEnabled"`
-	BotMmEnabled      bool  `json:"botMmEnabled"`
-	FreeToPlay        bool  `json:"freeToPlay"`
-	RankedPlayEnabled bool  `json:"rankedPlayEnabled"`
+	Id                int64
+	Active            bool
+	BotEnabled        bool
+	BotMmEnabled      bool
+	FreeToPlay        bool
+	RankedPlayEnabled bool
 }
 
 type AggregatedStats struct {
-	AverageAssists              int `json:"averageAssists"`
-	AverageChampionsKilled      int `json:"averageChampionsKilled"`
-	AverageCombatPlayerScore    int `json:"averageCombatPlayerScore"`
-	AverageNodeCapture          int `json:"averageNodeCapture"`
-	AverageNodeCaptureAssist    int `json:"averageNodeCaptureAssist"`
-	AverageNodeNeutralize       int `json:"averageNodeNeutralize"`
-	AverageNodeNeutralizeAssist int `json:"averageNodeNeutralizeAssist"`
-	AverageNumDeaths            int `json:"averageNumDeaths"`
-	AverageObjectivePlayerScore int `json:"averageObjectivePlayerScore"`
-	AverageTeamObjective        int `json:"averageTeamObjective"`
-	AverageTotalPlayerScore     int `json:"averageTotalPlayerScore"`
-	BotGamesPlayed              int `json:"botGamesPlayed"`
-	KillingSpree                int `json:"killingSpree"`
-	MaxAssists                  int `json:"maxAssists"`
-	MaxChampionsKilled          int `json:"maxChampionsKilled"`
-	MaxCombatPlayerScore        int `json:"maxCombatPlayerScore"`
-	MaxLargestCriticalStrike    int `json:"maxLargestCriticalStrike"`
-	MaxLargestKillingSpree      int `json:"maxLargestKillingSpree"`
-	MaxNodeCapture              int `json:"maxNodeCapture"`
-	MaxNodeCaptureAssist        int `json:"maxNodeCaptureAssist"`
-	MaxNodeNeutralize           int `json:"maxNodeNeutralize"`
-	MaxNodeNeutralizeAssist     int `json:"maxNodeNeutralizeAssist"`
-	MaxObjectivePlayerScore     int `json:"maxObjectivePlayerScore"`
-	MaxTeamObjective            int `json:"maxTeamObjective"`
-	MaxTimePlayed               int `json:"maxTimePlayed"`
-	MaxTimeSpentLiving          int `json:"maxTimeSpentLiving"`
-	MaxTotalPlayerScore         int `json:"maxTotalPlayerScore"`
-	MostChampionKillsPerSession int `json:"mostChampionKillsPerSession"`
-	MostSpellsCast              int `json:"mostSpellsCast"`
-	NormalGamesPlayed           int `json:"normalGamesPlayed"`
-	RankedPremadeGamesPlayed    int `json:"rankedPremadeGamesPlayed"`
-	RankedSoloGamesPlayed       int `json:"rankedSoloGamesPlayed"`
-	TotalAssists                int `json:"totalAssists"`
-	TotalChampionKills          int `json:"totalChampionKills"`
-	TotalDamageDealt            int `json:"totalDamageDealt"`
-	TotalDamageTaken            int `json:"totalDamageTaken"`
-	TotalDeathsPerSession       int `json:"totalDeathsPerSession"`
-	TotalDoubleKills            int `json:"totalDoubleKills"`
-	TotalFirstBlood             int `json:"totalFirstBlood"`
-	TotalGoldEarned             int `json:"totalGoldEarned"`
-	TotalHeal                   int `json:"totalHeal"`
-	TotalMagicDamageDealt       int `json:"totalMagicDamageDealt"`
-	TotalMinionKills            int `json:"totalMinionKills"`
-	TotalNeutralMinionsKilled   int `json:"totalNeutralMinionsKilled"`
-	TotalNodeCapture            int `json:"totalNodeCapture"`
-	TotalNodeNeutralize         int `json:"totalNodeNeutralize"`
-	TotalPentaKills             int `json:"totalPentaKills"`
-	TotalPhysicalDamageDealt    int `json:"totalPhysicalDamageDealt"`
-	TotalQuadraKills            int `json:"totalQuadraKills"`
-	TotalSessionsLost           int `json:"totalSessionsLost"`
-	TotalSessionsPlayed         int `json:"totalSessionsPlayed"`
-	TotalSessionsWon            int `json:"totalSessionsWon"`
-	TotalTripleKills            int `json:"totalTripleKills"`
-	TotalTurretsKilled          int `json:"totalTurretsKilled"`
-	TotalUnrealKills            int `json:"totalUnrealKills"`
+	AverageAssists              int
+	AverageChampionsKilled      int
+	AverageCombatPlayerScore    int
+	AverageNodeCapture          int
+	AverageNodeCaptureAssist    int
+	AverageNodeNeutralize       int
+	AverageNodeNeutralizeAssist int
+	AverageNumDeaths            int
+	AverageObjectivePlayerScore int
+	AverageTeamObjective        int
+	AverageTotalPlayerScore     int
+	BotGamesPlayed              int
+	KillingSpree                int
+	MaxAssists                  int
+	MaxChampionsKilled          int
+	MaxCombatPlayerScore        int
+	MaxLargestCriticalStrike    int
+	MaxLargestKillingSpree      int
+	MaxNodeCapture              int
+	MaxNodeCaptureAssist        int
+	MaxNodeNeutralize           int
+	MaxNodeNeutralizeAssist     int
+	MaxObjectivePlayerScore     int
+	MaxTeamObjective            int
+	MaxTimePlayed               int
+	MaxTimeSpentLiving          int
+	MaxTotalPlayerScore         int
+	MostChampionKillsPerSession int
+	MostSpellsCast              int
+	NormalGamesPlayed           int
+	RankedPremadeGamesPlayed    int
+	RankedSoloGamesPlayed       int
+	TotalAssists                int
+	TotalChampionKills          int
+	TotalDamageDealt            int
+	TotalDamageTaken            int
+	TotalDeathsPerSession       int
+	TotalDoubleKills            int
+	TotalFirstBlood             int
+	TotalGoldEarned             int
+	TotalHeal                   int
+	TotalMagicDamageDealt       int
+	TotalMinionKills            int
+	TotalNeutralMinionsKilled   int
+	TotalNodeCapture            int
+	TotalNodeNeutralize         int
+	TotalPentaKills             int
+	TotalPhysicalDamageDealt    int
+	TotalQuadraKills            int
+	TotalSessionsLost           int
+	TotalSessionsPlayed         int
+	TotalSessionsWon            int
+	TotalTripleKills            int
+	TotalTurretsKilled          int
+	TotalUnrealKills            int
 }
 
 type League struct {
@@ -230,4 +230,112 @@ type PlayerStatsSummary struct {
 	ModifyDate            int64           // Date stats were last modified specified as epoch milliseconds.
 	PlayerStatSummaryType string          // Player stats summary type. (legal values: AramUnranked5x5, CoopVsAI, CoopVsAI3x3, OdinUnranked, RankedPremade3x3, RankedPremade5x5, RankedSolo5x5, RankedTeam3x3, RankedTeam5x5, Unranked, Unranked3x3, OneForAll5x5, FirstBlood1x1, FirstBlood2x2, SummonersRift6x6, CAP5x5, URF, URFBots)
 	Wins                  int             // Number of wins for this queue type.
+}
+
+type RecentGames struct {
+	Games      []Game // Collection of recent games played (max 10).
+	SummonerId int64  // Summoner ID
+}
+
+type Game struct {
+	ChampionId    int      // Champion ID associated with game.
+	CreateDate    int64    // Date that end game data was recorded, specified as epoch milliseconds.
+	FellowPlayers []Player // Other players associated with the game.
+	GameId        int64    // Game ID.
+	GameMode      string   // Game mode. (legal values: CLASSIC, ODIN, ARAM, TUTORIAL, ONEFORALL, FIRSTBLOOD)
+	GameType      string   // Game type. (legal values: CUSTOM_GAME, MATCHED_GAME, TUTORIAL_GAME)
+	Invalid       bool     // Invalid flag.
+	IpEarned      int      // IP Earned.
+	Level         int      // Level.
+	MapId         int      // Map ID.
+	Spell1        int      // ID of first summoner spell.
+	Spell2        int      // ID of second summoner spell.
+	Stats         RawStats //Statistics associated with the game for this summoner.
+	SubType       string   // Game sub-type. (legal values: NONE, NORMAL, BOT, RANKED_SOLO_5x5, RANKED_PREMADE_3x3, RANKED_PREMADE_5x5, ODIN_UNRANKED, RANKED_TEAM_3x3, RANKED_TEAM_5x5, NORMAL_3x3, BOT_3x3, CAP_5x5, ARAM_UNRANKED_5x5, ONEFORALL_5x5, FIRSTBLOOD_1x1, FIRSTBLOOD_2x2, SR_6x6, URF, URF_BOT)
+	TeamId        int      // Team ID associated with game. Team ID 100 is blue team. Team ID 200 is purple team.
+}
+
+type Player struct {
+	ChampionId int   // Champion id associated with player.
+	SummonerId int64 // Summoner id associated with player.
+	TeamId     int   // Team id associated with player.
+}
+
+type RawStats struct {
+	Assists                         int
+	BarracksKilled                  int // Number of enemy inhibitors killed.
+	ChampionsKilled                 int
+	CombatPlayerScore               int
+	ConsumablesPurchased            int
+	DamageDealtPlayer               int
+	DoubleKills                     int
+	FirstBlood                      int
+	Gold                            int
+	GoldEarned                      int
+	GoldSpent                       int
+	Item0                           int
+	Item1                           int
+	Item2                           int
+	Item3                           int
+	Item4                           int
+	Item5                           int
+	Item6                           int
+	ItemsPurchased                  int
+	KillingSprees                   int
+	LargestCriticalStrike           int
+	LargestKillingSpree             int
+	LargestMultiKill                int
+	LegendaryItemsCreated           int // Number of tier 3 items built.
+	Level                           int
+	MagicDamageDealtPlayer          int
+	MagicDamageDealtToChampions     int
+	MagicDamageTaken                int
+	MinionsDenied                   int
+	MinionsKilled                   int
+	NeutralMinionsKilled            int
+	NeutralMinionsKilledEnemyJungle int
+	NeutralMinionsKilledYourJungle  int
+	NexusKilled                     bool // Flag specifying if the summoner got the killing blow on the nexus.
+	NodeCapture                     int
+	NodeCaptureAssist               int
+	NodeNeutralize                  int
+	NodeNeutralizeAssist            int
+	NumDeaths                       int
+	NumItemsBought                  int
+	ObjectivePlayerScore            int
+	PentaKills                      int
+	PhysicalDamageDealtPlayer       int
+	PhysicalDamageDealtToChampions  int
+	PhysicalDamageTaken             int
+	QuadraKills                     int
+	SightWardsBought                int
+	Spell1Cast                      int //Number of times first champion spell was cast.
+	Spell2Cast                      int //Number of times second champion spell was cast.
+	Spell3Cast                      int //Number of times third champion spell was cast.
+	Spell4Cast                      int //Number of times fourth champion spell was cast.
+	SummonSpell1Cast                int
+	SummonSpell2Cast                int
+	SuperMonsterKilled              int
+	Team                            int
+	TeamObjective                   int
+	TimePlayed                      int
+	TotalDamageDealt                int
+	TotalDamageDealtToChampions     int
+	TotalDamageTaken                int
+	TotalHeal                       int
+	TotalPlayerScore                int
+	TotalScoreRank                  int
+	TotalTimeCrowdControlDealt      int
+	TotalUnitsHealed                int
+	TripleKills                     int
+	TrueDamageDealtPlayer           int
+	TrueDamageDealtToChampions      int
+	TrueDamageTaken                 int
+	TurretsKilled                   int
+	UnrealKills                     int
+	VictoryPointTotal               int
+	VisionWardsBought               int
+	WardKilled                      int
+	WardPlaced                      int
+	Win                             bool //Flag specifying whether or not this game was won.
 }

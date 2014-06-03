@@ -89,18 +89,18 @@ func fetchAndCacheSummoner(name string) Summoner {
 
 	if summ, ok := allSummoners[name]; !ok {
 		// First check memcache if in appengine
-		cacheSummoner(name)
+		fetchSummoner(name)
 	} else {
 		// TODO: Make sure this works correctly
-		if summ.RevisionDate+10000000 < time.Now().Unix() {
-			cacheSummoner(name)
+		if summ.RevisionDate+3600000 < time.Now().Unix() {
+			fetchSummoner(name)
 		}
 	}
 	summ, _ := allSummoners[name]
 	return summ
 }
 
-func cacheSummoner(name string) {
+func fetchSummoner(name string) {
 	summoners := getSummonerByName(name)
 	if s, gotOk := summoners[name]; gotOk {
 		allSummoners[name] = s

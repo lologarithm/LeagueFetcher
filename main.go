@@ -58,7 +58,9 @@ func handleRecentMatches(w http.ResponseWriter, r *http.Request, cacheRequests c
 		returnEmptyJson(w)
 		return
 	}
-	matches := getRecentMatches(summoner.Id)
+
+	matches, _ := GetSummonerMatchesSimple(summoner.Id, cacheRequests)
+
 	matchJson, jsonErr := json.Marshal(matches)
 	if jsonErr != nil {
 		returnEmptyJson(w)

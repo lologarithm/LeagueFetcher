@@ -238,7 +238,7 @@ type RecentGames struct {
 }
 
 type Game struct {
-	ChampionId    int      // Champion ID associated with game.
+	ChampionId    int64    // Champion ID associated with game.
 	CreateDate    int64    // Date that end game data was recorded, specified as epoch milliseconds.
 	FellowPlayers []Player // Other players associated with the game.
 	GameId        int64    // Game ID.
@@ -250,7 +250,7 @@ type Game struct {
 	MapId         int      // Map ID.
 	Spell1        int      // ID of first summoner spell.
 	Spell2        int      // ID of second summoner spell.
-	Stats         RawStats //Statistics associated with the game for this summoner.
+	Stats         RawStats // Statistics associated with the game for this summoner.
 	SubType       string   // Game sub-type. (legal values: NONE, NORMAL, BOT, RANKED_SOLO_5x5, RANKED_PREMADE_3x3, RANKED_PREMADE_5x5, ODIN_UNRANKED, RANKED_TEAM_3x3, RANKED_TEAM_5x5, NORMAL_3x3, BOT_3x3, CAP_5x5, ARAM_UNRANKED_5x5, ONEFORALL_5x5, FIRSTBLOOD_1x1, FIRSTBLOOD_2x2, SR_6x6, URF, URF_BOT)
 	TeamId        int      // Team ID associated with game. Team ID 100 is blue team. Team ID 200 is purple team.
 }
@@ -309,10 +309,10 @@ type RawStats struct {
 	PhysicalDamageTaken             int
 	QuadraKills                     int
 	SightWardsBought                int
-	Spell1Cast                      int //Number of times first champion spell was cast.
-	Spell2Cast                      int //Number of times second champion spell was cast.
-	Spell3Cast                      int //Number of times third champion spell was cast.
-	Spell4Cast                      int //Number of times fourth champion spell was cast.
+	Spell1Cast                      int // Number of times first champion spell was cast.
+	Spell2Cast                      int // Number of times second champion spell was cast.
+	Spell3Cast                      int // Number of times third champion spell was cast.
+	Spell4Cast                      int // Number of times fourth champion spell was cast.
 	SummonSpell1Cast                int
 	SummonSpell2Cast                int
 	SuperMonsterKilled              int

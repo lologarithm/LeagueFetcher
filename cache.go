@@ -29,6 +29,8 @@ var allSummoners map[string]Summoner
 var allChampions map[int64]Champion
 var allLeagues map[int64]League
 var allTeams map[int64]Team
+var allGames map[int64]Game
+var gamesBySummoner map[int64][]Game
 
 func storeSummoners(file string) {
 	jsonData, err := json.Marshal(allSummoners)
@@ -107,6 +109,7 @@ func fetchSummoner(name string) {
 	}
 }
 func fetchAndCacheChampion(id int64) Champion {
+	// TODO: re-fetch champions if there is a new one.
 	if allChampions == nil || len(allChampions) == 0 {
 		champs := getAllChampions()
 		for _, champion := range champs.Data {
@@ -116,6 +119,37 @@ func fetchAndCacheChampion(id int64) Champion {
 	}
 	champ, _ := allChampions[id]
 	return champ
+}
+
+func fetchAndCacheGames(id int64) {
+	matches := getRecentMatches(id)
+	for _, match := range matches.Games {
+		allGames[match.GameId] = match
+		gamesBySummoner[id] = append([]Game{match}, gamesBySummoner[id]...)
+	}
+}
+
+func fetchSimpleMatchHistory(id int64) LocalMatchHistory {
+	summary := LocalMatchHistory{SummonerId: id}
+	if _, ok := gamesBySummoner[id]; !ok {
+		gamesBySummoner[id] = []Game{}
+		fetchAndCacheGames(id)
+	}
+
+	games := gamesBySummoner[id]
+	for _, game := range games {
+		champ := fetchAndCacheChampion(game.ChampionId)
+		lg := LocalMatchSimpleFromGame(game)
+		lg.ChampionName = champ.Name
+		summary.Games = append(summary.Games, lg)
+	}
+
+	return summary
+}
+
+func fetchGame(id int64) Game {
+	g, _ := allGames[id]
+	return g
 }
 
 func RunCache(exit chan bool, requests chan CacheRequest) {
@@ -146,6 +180,22 @@ func fetchCache(request CacheRequest) {
 		champ := fetchAndCacheChampion(intKey)
 		response.Value = champ
 		response.Ok = true
+	case "games":
+		intKey, err := strconv.ParseInt(request.Key, 10, 64)
+		if err != nil {
+			break
+		}
+		games := fetchSimpleMatchHistory(intKey)
+		response.Value = games
+		response.Ok = true
+	case "game":
+		intKey, err := strconv.ParseInt(request.Key, 10, 64)
+		if err != nil {
+			break
+		}
+		game := fetchGame(intKey)
+		response.Value = game
+		response.Ok = true
 	}
 
 	request.Response <- response
@@ -154,6 +204,8 @@ func fetchCache(request CacheRequest) {
 func setupCache() {
 	loadChampions(championCache)
 	loadSummoners(summonerCache)
+	allGames = make(map[int64]Game, 1)
+	gamesBySummoner = make(map[int64][]Game, 1)
 }
 
 func saveCache() {
@@ -196,4 +248,17 @@ func GetSummoner(name string, cacheRequests chan CacheRequest) (s Summoner, e er
 		return summoner, nil
 	}
 	return Summoner{}, cacheError{message: "Failed to retrieve summoner."}
+}
+
+func GetSummonerMatchesSimple(id int64, cache chan CacheRequest) (lmh LocalMatchHistory, e error) {
+	cResponse := make(chan CacheResponse, 1)
+	gameRequest := CacheRequest{Response: cResponse, Type: "games", Key: fmt.Sprintf("%d", id)}
+	cache <- gameRequest
+	respValue := <-cResponse
+	if respValue.Ok {
+		games, _ := respValue.Value.(LocalMatchHistory)
+		return games, nil
+	}
+	return LocalMatchHistory{}, cacheError{message: "Failed to retrieve games."}
+
 }

@@ -24,8 +24,9 @@ const (
 	champVersion    = "v1.2"
 	leagueVersion   = "v2.4"
 	teamVersion     = "v2.3"
-	apiKey          = "SETME"
 )
+
+var apiKey string
 
 func makeUrl(version string, method string) string {
 	url := fmt.Sprintf("%s/%s/%s/%s?api_key=%s", baseUrl, region, version, method, apiKey)

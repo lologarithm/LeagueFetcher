@@ -92,7 +92,7 @@ func fetchAndCacheSummoner(name string) Summoner {
 		fetchSummoner(name)
 	} else {
 		// TODO: Make sure this works correctly
-		if summ.RevisionDate+3600000 < time.Now().Unix() {
+		if summ.RevisionDate+3600000 < time.Now().Unix()*1000 {
 			fetchSummoner(name)
 		}
 	}

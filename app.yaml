@@ -1,8 +1,9 @@
 application: leaguefetcher
-version: dev-snapshot
+module: main
+instance_class: F1
+version: 1
 runtime: go
 api_version: go1
-threadsafe: yes
 
 handlers:
 - url: /favicon\.ico
@@ -21,9 +22,12 @@ handlers:
 - url: /js
   static_dir: client/build/js
 
-- url: .*
+- url: /
   static_files: client/src/index.html
   upload: client/src/index.html
+
+- url: /.*
+  script: _go_app
 
 skip_files:
 - ^client/test/.*
@@ -48,4 +52,3 @@ skip_files:
 - ^(.*/)?example/.*
 - ^(.*/)?docs/.*
 - ^(.*/)?example/.*
-

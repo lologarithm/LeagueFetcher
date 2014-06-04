@@ -1,10 +1,12 @@
-package main
+package LeagueApi
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 )
 
 const (
@@ -24,22 +26,25 @@ const (
 	champVersion    = "v1.2"
 	leagueVersion   = "v2.4"
 	teamVersion     = "v2.3"
-	apiKey          = "SETME"
+	gameVersion     = "v1.3"
 )
 
+var ApiKey string
+
 func makeUrl(version string, method string) string {
-	url := fmt.Sprintf("%s/%s/%s/%s?api_key=%s", baseUrl, region, version, method, apiKey)
+	url := fmt.Sprintf("%s/%s/%s/%s?api_key=%s", baseUrl, region, version, method, ApiKey)
 	//fmt.Printf("URL: %s\n", url)
 	return url
 }
 
 func makeStaticDataUrl(version string, method string, params string) string {
-	url := fmt.Sprintf("%s/static-data/%s/%s/%s?api_key=%s%s", baseUrl, region, version, method, apiKey, params)
+	url := fmt.Sprintf("%s/static-data/%s/%s/%s?api_key=%s%s", baseUrl, region, version, method, ApiKey, params)
 	//fmt.Printf("URL: %s\n", url)
 	return url
 }
 
 func makeRequest(url string, value interface{}) {
+
 	resp, err := http.Get(url)
 	if err != nil {
 		fmt.Printf("Failed to open conn: %s\n", err.Error())
@@ -58,38 +63,55 @@ func makeRequest(url string, value interface{}) {
 	}
 }
 
-func getSummonerByName(name string) (summoners map[string]Summoner) {
+func GetSummonerByName(name string) (summoners map[string]Summoner) {
 	makeRequest(makeUrl(summonerVersion, "summoner/by-name/"+name), &summoners)
 	return
 }
 
-func getSummonerRankedStats(id int64) (srs RankedStats) {
+func GetSummonersById(ids []int64) (summoners map[string]Summoner) {
+	var buffer bytes.Buffer
+	buffer.WriteString("summoner/")
+	for _, id := range ids {
+		buffer.WriteString(strconv.FormatInt(id, 10))
+		buffer.WriteString(",")
+	}
+	makeRequest(makeUrl(summonerVersion, buffer.String()), &summoners)
+	return
+}
+
+func GetSummonerRankedStats(id int64) (srs RankedStats) {
 	method := fmt.Sprintf("stats/by-summoner/%d/ranked", id)
 	makeRequest(makeUrl(statsVersion, method), &srs)
 	return
 }
 
-func getSummonerSummaryStats(id int64) (stats PlayerStatsSummaryList) {
+func GetSummonerSummaryStats(id int64) (stats PlayerStatsSummaryList) {
 	method := fmt.Sprintf("stats/by-summoner/%d/summary", id)
 	makeRequest(makeUrl(statsVersion, method), &stats)
 	return
 }
 
-func getSummonerLeagues(id int64) (leagues map[string][]League) {
+func GetSummonerLeagues(id int64) (leagues map[string][]League) {
 	method := fmt.Sprintf("league/by-summoner/%d/entry", id)
 	makeRequest(makeUrl(leagueVersion, method), &leagues)
 	return
 }
 
-func getSummonerTeams(id int64) (teams map[string][]Team) {
+func GetSummonerTeams(id int64) (teams map[string][]Team) {
 	method := fmt.Sprintf("team/by-summoner/%d", id)
 	makeRequest(makeUrl(teamVersion, method), &teams)
 	return
 }
 
-func getAllChampions() (champs ChampionList) {
+func GetAllChampions() (champs ChampionList) {
 	params := "&champData=all"
 	makeRequest(makeStaticDataUrl(champVersion, "champion", params), &champs)
+	return
+}
+
+func GetRecentMatches(id int64) (r RecentGames) {
+	method := fmt.Sprintf("game/by-summoner/%d/recent", id)
+	makeRequest(makeUrl(gameVersion, method), &r)
 	return
 }
 

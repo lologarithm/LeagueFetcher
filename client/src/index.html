@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+		<link rel="stylesheet" href="/js/bower_components/bootstrap/dist/css/bootstrap.css" />
+		<link rel="stylesheet" href="/css/site.css" />
+	</head>
+	<body style="background-color: #e9eaed">
+		<div id="container"></div>
+		<!--Referance in the required 3rd party and webskin library stuff -->	
+		<script src="/js/node_modules/requirejs/require.js"></script>
+		<script type="text/javascript">
+			require.config({
+			    baseUrl: '',
+			    paths: {
+			    	//REQUIRE LIBRARIES
+			        'jquery': '/js/node_modules/jquery/dist/jquery.min',
+			        'react': 'js/bower_components/react/react',
+			        'moment': 'js/bower_components/moment/moment'
+			    },
+			});
+
+			require(['jquery', 'js/components/views/index.js'], function($, view) {
+				view();
+			});
+		</script>
+	</body>
+</html>

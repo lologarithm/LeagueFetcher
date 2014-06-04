@@ -15,6 +15,8 @@ const (
 
 var allSummoners map[string]Summoner
 var allChampions map[int64]Champion
+var allLeagues map[int64]League
+var allTeams map[int64]Team
 
 func storeSummoners(file string) {
 	jsonData, err := json.Marshal(allSummoners)
@@ -22,8 +24,8 @@ func storeSummoners(file string) {
 		fmt.Printf("Failed to serialize: %s\n", err.Error())
 		return
 	}
-	ioutil.WriteFile(file, jsonData, os.ModeExclusive)
-
+	os.Remove(file)
+	ioutil.WriteFile(file, jsonData, os.ModePerm)
 }
 
 func loadSummoners(file string) {
@@ -49,7 +51,8 @@ func storeChampions(file string) {
 		fmt.Printf("Failed to serialize: %s\n", err.Error())
 		return
 	}
-	ioutil.WriteFile(file, jsonData, os.ModeExclusive)
+	os.Remove(file)
+	ioutil.WriteFile(file, jsonData, os.ModePerm)
 }
 
 func loadChampions(file string) {
@@ -84,8 +87,8 @@ func GetSummoner(name string) Summoner {
 func GetChampion(id int64) Champion {
 	if allChampions == nil || len(allChampions) == 0 {
 		champs := getAllChampions()
-		for key, champion := range champs.Data {
-			fmt.Printf("Got Champ %s: %v\n", key, champion)
+		for _, champion := range champs.Data {
+			// fmt.Printf("Got Champ %s: %v\n", key, champion)
 			allChampions[champion.Id] = champion
 		}
 	}

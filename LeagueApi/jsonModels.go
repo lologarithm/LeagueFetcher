@@ -1,31 +1,32 @@
 package LeagueApi
 
 type Summoner struct {
-	Id            int64  `json:"id"`
-	Name          string `json:"name"`
-	ProfileIconId int    `json:"profileIconId"`
-	SummonerLevel int    `json:"summonerLevel"`
-	RevisionDate  int64  `json:"revisionDate"`
+	Id            int64
+	Name          string
+	ProfileIconId int
+	SummonerLevel int
+	RevisionDate  int64
 }
 
 type RankedStats struct {
-	SummonerId int64           `json:"summonerId"`
-	Name       string          `json:"name"`
-	Champions  []ChampionStats `json:"champions"`
-	ModifyDate int64           `json:"modifyDate"`
+	SummonerId int64
+	Name       string
+	Champions  []ChampionStats
+	ModifyDate int64
 }
 
 type ChampionStats struct {
-	Id    int64           `json:"id"`
-	Stats AggregatedStats `json:"stats"`
+	Id           int64
+	ChampionName string
+	Stats        AggregatedStats
 }
 
 type ChampionInfoList struct {
-	Champions []ChampionInfo `json:"Champions"`
+	Champions []ChampionInfo
 }
 
 type ChampionList struct {
-	Data map[string]Champion `json:"data"`
+	Data map[string]Champion
 }
 
 type Champion struct {
@@ -253,6 +254,7 @@ type Game struct {
 	Stats         RawStats // Statistics associated with the game for this summoner.
 	SubType       string   // Game sub-type. (legal values: NONE, NORMAL, BOT, RANKED_SOLO_5x5, RANKED_PREMADE_3x3, RANKED_PREMADE_5x5, ODIN_UNRANKED, RANKED_TEAM_3x3, RANKED_TEAM_5x5, NORMAL_3x3, BOT_3x3, CAP_5x5, ARAM_UNRANKED_5x5, ONEFORALL_5x5, FIRSTBLOOD_1x1, FIRSTBLOOD_2x2, SR_6x6, URF, URF_BOT)
 	TeamId        int      // Team ID associated with game. Team ID 100 is blue team. Team ID 200 is purple team.
+	ExpireTime    int64    // Time this data will expire.
 }
 
 type Player struct {

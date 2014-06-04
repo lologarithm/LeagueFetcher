@@ -5,13 +5,15 @@ import (
 )
 
 // Combines data from Summoner, RankedStats, Solo Queue League, and Ranked Teams
-type Summoner struct {
+type SummonerRankedData struct {
 	// Masteries
 	// Runes
 	lapi.Summoner
 	lapi.RankedStats
-	SoloLeague lapi.League
-	Teams      map[string]Team
+	Solo5sLeague      lapi.League
+	Solo3sLeague      lapi.League
+	RankedTeamLeagues map[string]lapi.League
+	ExpireTime        int64 // Unix time of when this data is expired
 }
 
 // Combines Team information with the league information
@@ -24,6 +26,7 @@ type MatchHistory struct {
 	SummonerId int64
 	Games      []MatchSimple
 }
+
 type MatchSimple struct {
 	ChampionName string     // Champion ID associated with game.
 	CreateDate   int64      // Date that end game data was recorded, specified as epoch milliseconds.

@@ -6,5 +6,49 @@ runtime: go
 api_version: go1
 
 handlers:
+- url: /favicon\.ico
+  static_files: favicon.ico
+  upload: favicon\.ico
+
+- url: /css
+  static_dir: client/src/css
+
+- url: /js/node_modules
+  static_dir: client/node_modules
+
+- url: /js/bower_components
+  static_dir: client/bower_components
+
+- url: /js
+  static_dir: client/build/js
+
+- url: /
+  static_files: client/src/index.html
+  upload: client/src/index.html
+
 - url: /.*
   script: _go_app
+
+skip_files:
+- ^client/test/.*
+- ^client/node_modules/react-tools/.*
+- ^client/node_modules/grunt/.*
+- ^client/node_modules/grunt-contrib-concat/.*
+- ^client/node_modules/grunt-contrib-cssmin/.*
+- ^client/node_modules/grunt-contrib-uglify/.*
+- ^client/node_modules/grunt-contrib-watch/.*
+- ^client/node_modules/esprima-fb/.*
+- ^(.*/)?#.*#$
+- ^(.*/)?.*~$
+- ^(.*/)?.*\.py[co]$
+- ^(.*/)?.*/RCS/.*$
+- ^(.*/)?\..*$
+- ^.git/.*
+- ^(.*/)?.(README|Readme|readme).*$
+- ^(.*/)?.(package.json|PACKAGE.json|PACKAGE.JSON)$
+- ^(.*/)?.(CHANGELOG|changelog|Changelog).*$
+- ^(.*/)?test/.*
+- ^(.*/)?.bin/.*
+- ^(.*/)?example/.*
+- ^(.*/)?docs/.*
+- ^(.*/)?example/.*

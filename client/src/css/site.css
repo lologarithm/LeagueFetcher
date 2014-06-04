@@ -1,0 +1,204 @@
+.matchHistoryElement {
+	background: #fff;
+	border: 1px solid;
+	border-color: #e5e6e9 #dfe0e4 #d0d1d5;
+	-webkit-border-radius: 3px;
+}
+.matchHistoryElement:hover {
+	background-color: #f0f0f0;
+}
+
+input {
+	padding:5px;
+}
+
+
+
+
+/* Flex Stuff */
+.flex1 {
+  -webkit-flex: 1;
+          flex: 1;
+}
+.flexContainer {
+  display: -webkit-flex;
+  display: flex;
+}
+.flexNone {
+  -webkit-flex: none;
+          flex: none;
+}
+.flexInitial {
+  -webkit-flex: initial;
+          flex: initial;
+}
+.flexColumn {
+	flex-direction: column;
+}
+.flexContainer > .right {
+	margin-left: auto;
+}
+.flexContainer > .left {
+	margin-right: auto;
+}
+
+
+.margin-s,
+.margin-top-s {
+	margin-top: 5px;
+}
+.margin-s,
+.margin-bottom-s {
+	margin-bottom: 5px;
+}
+.margin-s,
+.margin-left-s {
+	margin-left: 5px;
+}
+.margin-s,
+.margin-right-s {
+	margin-right: 5px;
+}
+
+.margin-m,
+.margin-top-m {
+	margin-top: 10px;
+}
+.margin-m,
+.margin-bottom-m {
+	margin-bottom: 10px;
+}
+.margin-m,
+.margin-left-m {
+	margin-left: 10px;
+}
+.margin-m,
+.margin-right-m {
+	margin-right: 10px;
+}
+
+.margin-l,
+.margin-top-l {
+	margin-top: 15px;
+}
+.margin-l,
+.margin-bottom-l {
+	margin-bottom: 15px;
+}
+.margin-l,
+.margin-left-l {
+	margin-left: 15px;
+}
+.margin-l,
+.margin-right-l {
+	margin-right: 15px;
+}
+
+.margin-xl,
+.margin-top-xl {
+	margin-top: 20px;
+}
+.margin-xl,
+.margin-bottom-xl {
+	margin-bottom: 20px;
+}
+.margin-xl,
+.margin-left-xl {
+	margin-left: 20px;
+}
+.margin-xl,
+.margin-right-xl {
+	margin-right: 20px;
+}
+
+.padding-s,
+.padding-top-s {
+	padding-top: 5px;
+}
+.padding-s,
+.padding-bottom-s {
+	padding-bottom: 5px;
+}
+.padding-s,
+.padding-left-s {
+	padding-left: 5px;
+}
+.padding-s,
+.padding-right-s {
+	padding-right: 5px;
+}
+
+.padding-m,
+.padding-top-m {
+	padding-top: 10px;
+}
+.padding-m,
+.padding-bottom-m {
+	padding-bottom: 10px;
+}
+.padding-m,
+.padding-left-m {
+	padding-left: 10px;
+}
+.padding-m,
+.padding-right-m {
+	padding-right: 10px;
+}
+
+.padding-l,
+.padding-top-l {
+	padding-top: 15px;
+}
+.padding-l,
+.padding-bottom-l {
+	padding-bottom: 15px;
+}
+.padding-l,
+.padding-left-l {
+	padding-left: 15px;
+}
+.padding-l,
+.padding-right-l {
+	padding-right: 15px;
+}
+
+.padding-xl,
+.padding-top-xl {
+	padding-top: 20px;
+}
+.padding-xl,
+.padding-bottom-xl {
+	padding-bottom: 20px;
+}
+.padding-xl,
+.padding-left-xl {
+	padding-left: 20px;
+}
+.padding-xl,
+.padding-right-xl {
+	padding-right: 20px;
+}
+.left {
+	float:left;
+}
+.right {
+	float:right;
+}
+.pointer {
+	cursor: pointer;
+}
+.draggable {
+	cursor: url(https://mail.google.com/mail/images/2/openhand.cur), move;
+	user-select: none;
+}
+.dragging {
+	cursor: url(https://mail.google.com/mail/images/2/closedhand.cur), move;
+}
+.draggable, .dragging {
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}

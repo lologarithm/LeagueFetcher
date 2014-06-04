@@ -32,7 +32,7 @@ func loadConfig() {
 
 type endpointFunc func(http.ResponseWriter, *http.Request, chan lolCache.Request, chan lolCache.Response)
 
-func main() {
+func init() {
 	loadConfig()
 	cacheGet := make(chan lolCache.Request, 10)
 	cachePut := make(chan lolCache.Response, 10)
@@ -58,8 +58,6 @@ func main() {
 	http.HandleFunc("/api/match", func(w http.ResponseWriter, req *http.Request) {
 		timeEndpoint(handleMatchDetails, w, req, cacheGet, cachePut)
 	})
-
-	http.ListenAndServe(":9000", nil)
 }
 
 // Wrapper function to time the endpoint call.

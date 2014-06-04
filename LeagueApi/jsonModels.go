@@ -1,4 +1,4 @@
-package main
+package LeagueApi
 
 type Summoner struct {
 	Id            int64  `json:"id"`
@@ -256,7 +256,7 @@ type Game struct {
 }
 
 type Player struct {
-	ChampionId int   // Champion id associated with player.
+	ChampionId int64 // Champion id associated with player.
 	SummonerId int64 // Summoner id associated with player.
 	TeamId     int   // Team id associated with player.
 }

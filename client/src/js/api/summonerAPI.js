@@ -1,18 +1,9 @@
-define(['jquery'], function ($) {
+define(['jquery', './apiPaths.js'], function ($, apiPaths) {
 	
-	function getMatchHistory (name) {
-		var waiting = true;
-		var result;
-
-		$.get('/api/summoner/matchHistory?name=' + name, function (data) {
-			result = data;
+	function getMatchHistory (name, callback) {
+		$.get(apiPaths.SUMMONER.GET_MATCH_HISTORY(name), function (data) {
+			callback (JSON.parse(data));
 		});
-
-		while(waiting) {
-
-		}
-
-		return result;
 	}
 
 	return {

@@ -1,8 +1,8 @@
 define(['./mockMatchHistoryResponse.js'], function (matchHistory) {
 	
 
-	function getMatchHistory(name) {
-		return matchHistory;
+	function getMatchHistory(name, callback) {
+		return callback(matchHistory);
 	}
 
 	return { 

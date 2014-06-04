@@ -8,6 +8,18 @@ define(['jquery', 'react', 'moment', 'js/stores/summonerStore.js', './matchHisto
 			});
 
 			return this.transferPropsTo(<div>{items}</div>);
+		},
+
+		componentDidMount: function ( ){
+			summonerStore.addChangeListener(this.onChange);
+		},
+
+		componentWillUnmount: function () {
+			summonerStore.removeChangeListener(this.onChange);
+		},
+
+		onChange: function () {
+			this.setState({});
 		}
 	});
 

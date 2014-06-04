@@ -1,0 +1,21 @@
+{
+  "name": "LeagueFetcher",
+  "version": "0.1.0",
+  "private": true,
+  "ignore": [
+    "bower_components",
+    "node_modules",
+    "test",
+    "tools",
+    "Gruntfile.js",
+    "index.html",
+    "init.sh",
+    "package.json",
+    "smithy.yaml"
+  ],
+  "dependencies": {
+    "react": "~0.8.0",
+    "moment": "~2.6.0",
+    "bootstrap": "~3.1.1"
+  }
+}

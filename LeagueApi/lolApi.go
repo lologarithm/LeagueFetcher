@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -29,89 +30,98 @@ const (
 	gameVersion     = "v1.3"
 )
 
+type RemoteGet func(url string) (*http.Response, error)
+type RemoteLog func(string, ...interface{})
+
 var ApiKey string
 
-func makeUrl(version string, method string) string {
+type LolFetcher struct {
+	Get RemoteGet
+	Log RemoteLog
+}
+
+func (lf *LolFetcher) makeUrl(version string, method string) string {
 	url := fmt.Sprintf("%s/%s/%s/%s?api_key=%s", baseUrl, region, version, method, ApiKey)
-	//fmt.Printf("URL: %s\n", url)
+	//lf.Log("URL: %s\n", url)
 	return url
 }
 
-func makeStaticDataUrl(version string, method string, params string) string {
+func (lf *LolFetcher) makeStaticDataUrl(version string, method string, params string) string {
 	url := fmt.Sprintf("%s/static-data/%s/%s/%s?api_key=%s%s", baseUrl, region, version, method, ApiKey, params)
-	//fmt.Printf("URL: %s\n", url)
+	//lf.Log("URL: %s\n", url)
 	return url
 }
 
-func makeRequest(url string, value interface{}) {
-
-	resp, err := http.Get(url)
+func (lf *LolFetcher) makeRequest(url string, value interface{}) {
+	lf.Log("Fetching: %s\n", url)
+	resp, err := lf.Get(url)
 	if err != nil {
-		fmt.Printf("Failed to open conn: %s\n", err.Error())
+		//Ctx.Infof("Failed to open conn: %s\n", err.Error())
 		return
 	}
 
 	body, bodyErr := ioutil.ReadAll(resp.Body)
 	if bodyErr != nil {
-		fmt.Printf("Failed to open conn: %s\n", err.Error())
+		//Ctx.Infof("Failed to open conn: %s\n", err.Error())
 		return
 	}
 
 	unmarshErr := json.Unmarshal(body, value)
 	if unmarshErr != nil {
-		fmt.Printf("Failed to unmarshal json: %s\n", unmarshErr.Error())
+		//Ctx.Infof("Failed to unmarshal json: %s\n", unmarshErr.Error())
 	}
 }
 
-func GetSummonerByName(name string) (summoners map[string]Summoner) {
-	makeRequest(makeUrl(summonerVersion, "summoner/by-name/"+name), &summoners)
+func (lf *LolFetcher) GetSummonerByName(name string) (summoners map[string]Summoner) {
+	name = NormalizeString(name)
+	lf.makeRequest(lf.makeUrl(summonerVersion, "summoner/by-name/"+name), &summoners)
 	return
 }
 
-func GetSummonersById(ids []int64) (summoners map[string]Summoner) {
+func (lf *LolFetcher) GetSummonersById(ids []int64) (summoners map[string]Summoner) {
 	var buffer bytes.Buffer
 	buffer.WriteString("summoner/")
 	for _, id := range ids {
 		buffer.WriteString(strconv.FormatInt(id, 10))
 		buffer.WriteString(",")
 	}
-	makeRequest(makeUrl(summonerVersion, buffer.String()), &summoners)
+	lf.makeRequest(lf.makeUrl(summonerVersion, buffer.String()), &summoners)
 	return
 }
 
-func GetSummonerRankedStats(id int64) (srs RankedStats) {
+func (lf *LolFetcher) GetSummonerRankedStats(id int64) (srs RankedStats) {
 	method := fmt.Sprintf("stats/by-summoner/%d/ranked", id)
-	makeRequest(makeUrl(statsVersion, method), &srs)
+	lf.makeRequest(lf.makeUrl(statsVersion, method), &srs)
 	return
 }
 
-func GetSummonerSummaryStats(id int64) (stats PlayerStatsSummaryList) {
+func (lf *LolFetcher) GetSummonerSummaryStats(id int64) (stats PlayerStatsSummaryList) {
 	method := fmt.Sprintf("stats/by-summoner/%d/summary", id)
-	makeRequest(makeUrl(statsVersion, method), &stats)
+	lf.makeRequest(lf.makeUrl(statsVersion, method), &stats)
 	return
 }
 
-func GetSummonerLeagues(id int64) (leagues map[string][]League) {
+func (lf *LolFetcher) GetSummonerLeagues(id int64) (leagues map[string][]League) {
 	method := fmt.Sprintf("league/by-summoner/%d/entry", id)
-	makeRequest(makeUrl(leagueVersion, method), &leagues)
+	lf.makeRequest(lf.makeUrl(leagueVersion, method), &leagues)
 	return
 }
 
-func GetSummonerTeams(id int64) (teams map[string][]Team) {
+func (lf *LolFetcher) GetSummonerTeams(id int64, get RemoteGet) (teams map[string][]Team) {
 	method := fmt.Sprintf("team/by-summoner/%d", id)
-	makeRequest(makeUrl(teamVersion, method), &teams)
+	lf.makeRequest(lf.makeUrl(teamVersion, method), &teams)
 	return
 }
 
-func GetAllChampions() (champs ChampionList) {
+func (lf *LolFetcher) GetAllChampions() (champs ChampionList) {
 	params := "&champData=all"
-	makeRequest(makeStaticDataUrl(champVersion, "champion", params), &champs)
+	lf.makeRequest(lf.makeStaticDataUrl(champVersion, "champion", params), &champs)
 	return
 }
 
-func GetRecentMatches(id int64) (r RecentGames) {
+func (lf *LolFetcher) GetRecentMatches(id int64) (r RecentGames) {
 	method := fmt.Sprintf("game/by-summoner/%d/recent", id)
-	makeRequest(makeUrl(gameVersion, method), &r)
+	lf.makeRequest(lf.makeUrl(gameVersion, method), &r)
 	return
 }
 
@@ -149,4 +159,9 @@ func LeagueDivisionToNumber(div string) int {
 	}
 	// Return some very large value
 	return 100
+}
+
+func NormalizeString(s string) string {
+	s = strings.ToLower(s)
+	return strings.Replace(s, " ", "", -1)
 }

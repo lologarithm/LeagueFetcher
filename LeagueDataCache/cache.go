@@ -2,9 +2,12 @@
 package LeagueDataCache
 
 import (
+	"appengine"
+	"appengine/urlfetch"
 	"fmt"
 	lapi "github.com/lologarithm/LeagueFetcher/LeagueApi"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -18,12 +21,14 @@ type Request struct {
 	Response chan Response
 	Type     string
 	Key      string
+	Context  appengine.Context
 }
 
 type Response struct {
-	Value interface{}
-	Type  string
-	Ok    bool
+	Context appengine.Context
+	Value   interface{}
+	Type    string
+	Ok      bool
 }
 
 // Cache dictionaries.
@@ -38,7 +43,9 @@ var allRankedData map[int64]SummonerRankedData
 
 // RunCache is the primary method. Start this as a goroutine and then use other public methods to fetch from this.
 func RunCache(exit chan bool, get chan Request, put chan Response) {
+	fmt.Printf("Setting up cache.")
 	setupCache()
+	fmt.Printf("Cache started and ready.")
 	for {
 		select {
 		case <-exit:
@@ -57,7 +64,9 @@ func putCache(resp Response) {
 	case "summoner":
 		if summoner, ok := resp.Value.(lapi.Summoner); ok {
 			allSummonersById[summoner.Id] = summoner
-			allSummonersByName[summoner.Name] = summoner
+			key := NormalizeString(summoner.Name)
+			allSummonersByName[key] = summoner
+			resp.Context.Infof("SUmm Map: %v\n MY KEY: %v\n", allSummonersByName, summoner.Name)
 		}
 	case "champion":
 		// For now the cache will handle this.
@@ -86,9 +95,12 @@ func putCache(resp Response) {
 }
 
 func fetchCache(request Request) {
-	response := Response{Ok: false}
+	response := &Response{Ok: false}
+	client := urlfetch.Client(request.Context)
+	api := &lapi.LolFetcher{Get: client.Get, Log: request.Context.Infof}
 	switch request.Type {
 	case "summoner":
+		request.Key = NormalizeString(request.Key)
 		if summoner, ok := allSummonersByName[request.Key]; ok {
 			response.Ok = true
 			response.Value = summoner
@@ -98,7 +110,7 @@ func fetchCache(request Request) {
 		if err != nil {
 			break
 		}
-		champ := fetchAndCacheChampion(intKey)
+		champ := fetchAndCacheChampion(intKey, api)
 		response.Value = champ
 		response.Ok = true
 	case "games":
@@ -113,7 +125,7 @@ func fetchCache(request Request) {
 				if len(games) < 10 {
 					sliceEnd = len(games)
 				}
-				matchHistory := convertGamesToMatchHistory(intKey, games[0:sliceEnd], fetchAndCacheChampion)
+				matchHistory := convertGamesToMatchHistory(intKey, games[0:sliceEnd], fetchAndCacheChampion, api)
 				response.Value = matchHistory
 				response.Ok = true
 			} else {
@@ -126,7 +138,7 @@ func fetchCache(request Request) {
 			break
 		}
 		if game, ok := allGames[intKey]; ok {
-			response.Value = convertGameToMatchDetail(game)
+			response.Value = convertGameToMatchDetail(game, api)
 			response.Ok = true
 		}
 	case "team":
@@ -145,7 +157,7 @@ func fetchCache(request Request) {
 		}
 	}
 
-	request.Response <- response
+	request.Response <- *response
 }
 
 func setupCache() {
@@ -171,4 +183,9 @@ func (c CacheError) Error() string {
 
 func getExpireTime() int64 {
 	return (time.Now().Add(time.Minute * cacheTimeoutMinutes)).Unix()
+}
+
+func NormalizeString(s string) string {
+	s = strings.ToLower(s)
+	return strings.Replace(s, " ", "", -1)
 }

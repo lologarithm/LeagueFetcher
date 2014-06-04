@@ -1,10 +1,12 @@
 package main
 
 import (
+	"appengine"
 	"encoding/json"
 	"fmt"
 	lapi "github.com/lologarithm/LeagueFetcher/LeagueApi"
 	lolCache "github.com/lologarithm/LeagueFetcher/LeagueDataCache"
+	"html"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -33,7 +35,8 @@ func loadConfig() {
 type endpointFunc func(http.ResponseWriter, *http.Request, chan lolCache.Request, chan lolCache.Response)
 
 func init() {
-	loadConfig()
+	//loadConfig()
+	lapi.ApiKey = "f0fa5a3c-e718-4004-b264-b9a64fc7a444"
 	cacheGet := make(chan lolCache.Request, 10)
 	cachePut := make(chan lolCache.Response, 10)
 	exit := make(chan bool, 1)
@@ -62,9 +65,11 @@ func init() {
 
 // Wrapper function to time the endpoint call.
 func timeEndpoint(endFunc endpointFunc, w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {
+	c := appengine.NewContext(r)
+	c.Infof("Hit URL: %s", r.URL)
 	st := time.Now().UnixNano()
 	endFunc(w, r, cacheGet, cachePut)
-	fmt.Printf("Request (%s) Took: %.4fms\n", r.URL, (float64(time.Now().UnixNano()-st))/float64(1000000.0))
+	c.Infof("Request (%s) Took: %.4fms\n", r.URL, (float64(time.Now().UnixNano()-st))/float64(1000000.0))
 }
 
 func defaultHandler(w http.ResponseWriter, r *http.Request) {
@@ -73,33 +78,36 @@ func defaultHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleRecentMatches(w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {
-	summoner, err := lolCache.GetSummoner(r.FormValue("name"), cacheGet, cachePut)
+	c := appengine.NewContext(r)
+	summoner, err := lolCache.GetSummoner(html.UnescapeString(r.FormValue("name")), cacheGet, cachePut, c)
+
 	if err != nil {
 		returnEmptyJson(w)
 		return
 	}
-	matches, _ := lolCache.GetSummonerMatchesSimple(summoner.Id, cacheGet, cachePut)
+	matches, _ := lolCache.GetSummonerMatchesSimple(summoner.Id, cacheGet, cachePut, c)
 	writeJson(w, matches)
 }
 
 func handleMatchDetails(w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {
+	c := appengine.NewContext(r)
 	intKey, intErr := strconv.ParseInt(r.FormValue("id"), 10, 64)
 	if intErr != nil {
 		returnEmptyJson(w)
 		return
 	}
-	match, _ := lolCache.GetMatch(intKey, cacheGet, cachePut)
+	match, _ := lolCache.GetMatch(intKey, cacheGet, cachePut, c)
 	writeJson(w, match)
 }
 
 func handleChampion(w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {
-	fmt.Printf("R: %v", r)
+	c := appengine.NewContext(r)
 	champId, parseErr := strconv.ParseInt(r.FormValue("id"), 10, 64)
 	if parseErr != nil {
 		returnEmptyJson(w)
 		return
 	}
-	champ, err := lolCache.GetChampion(champId, cacheGet)
+	champ, err := lolCache.GetChampion(champId, cacheGet, c)
 	if err != nil {
 		returnEmptyJson(w)
 		return
@@ -108,13 +116,14 @@ func handleChampion(w http.ResponseWriter, r *http.Request, cacheGet chan lolCac
 }
 
 func handleRankedData(w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {
-	summoner, err := lolCache.GetSummoner(r.FormValue("name"), cacheGet, cachePut)
+	c := appengine.NewContext(r)
+	summoner, err := lolCache.GetSummoner(html.UnescapeString(r.FormValue("name")), cacheGet, cachePut, c)
 	if err != nil {
 		returnEmptyJson(w)
 		return
 	}
 
-	data := lolCache.GetSummonerRankedData(summoner, cacheGet, cachePut)
+	data := lolCache.GetSummonerRankedData(summoner, cacheGet, cachePut, c)
 	writeJson(w, data)
 }
 

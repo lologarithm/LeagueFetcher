@@ -24,15 +24,15 @@ func fetchAndCacheSummoner(name string) lapi.Summoner {
 }
 
 func fetchSummoner(name string) {
-	summoners := lapi.GetSummonerByName(name)
-	if s, gotOk := summoners[name]; gotOk {
-		allSummonersByName[name] = s
-		allSummonersById[s.Id] = s
-	}
+	//summoners := lapi.GetSummonerByName(name)
+	//if s, gotOk := summoners[name]; gotOk {
+	//	allSummonersByName[name] = s
+	//	allSummonersById[s.Id] = s
+	//}
 }
 
 // Gets a list of summoners by Id from cache or remote server. This function needs to be fixed up to be better.
-func fetchSummonersById(ids []int64) []lapi.Summoner {
+func fetchSummonersById(ids []int64, api *lapi.LolFetcher) []lapi.Summoner {
 	missingIds := []int64{}
 	summoners := make([]lapi.Summoner, len(ids))
 	// First check for any cached summoners
@@ -46,7 +46,7 @@ func fetchSummonersById(ids []int64) []lapi.Summoner {
 
 	// Now fetch the summoners that we didn't find
 	if len(missingIds) > 0 {
-		fetchedSummoners := lapi.GetSummonersById(missingIds)
+		fetchedSummoners := api.GetSummonersById(missingIds)
 		for _, value := range fetchedSummoners {
 			allSummonersById[value.Id] = value
 			allSummonersByName[value.Name] = value

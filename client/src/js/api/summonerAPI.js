@@ -3,14 +3,13 @@ define(['jquery'], function ($) {
 	function getMatchHistory (name) {
 		var waiting = true;
 		var result;
-
-		$.get('/api/summoner/matchHistory?name=' + name, function (data) {
-			result = data;
-		});
-
-		while(waiting) {
-
-		}
+		$.ajax({
+	        url: '/api/summoner/matchHistory?name=' + name,
+	        success: function (data) {
+				result = JSON.parse(data);
+			},
+	        async:  false
+	    });
 
 		return result;
 	}
@@ -18,4 +17,5 @@ define(['jquery'], function ($) {
 	return {
 		getMatchHistory: getMatchHistory
 	}
+	
 });

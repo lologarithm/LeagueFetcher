@@ -1,6 +1,7 @@
 package LeagueDataCache
 
 import (
+	"fmt"
 	lapi "github.com/lologarithm/LeagueFetcher/LeagueApi"
 )
 
@@ -31,6 +32,11 @@ type MatchKey struct {
 	MatchId    int64
 	SummonerId int64
 }
+
+func (mk MatchKey) String() string {
+	return fmt.Sprintf("%d.%d", mk.MatchId, mk.SummonerId)
+}
+
 type MatchSimple struct {
 	ChampionName string     // Champion ID associated with game.
 	CreateDate   int64      // Date that end game data was recorded, specified as epoch milliseconds.

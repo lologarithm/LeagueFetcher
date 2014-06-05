@@ -11,7 +11,7 @@ func TestPutSummonerCache(t *testing.T) {
 	allSummonersById = make(map[int64]lapi.Summoner)
 	allSummonersByName = make(map[string]lapi.Summoner)
 	// Build Data
-	testResp := Response{Type: "summoner", Value: lapi.Summoner{Name: "Test Summoner", Id: int64(1)}}
+	testResp := Response{Type: "summoner", Value: lapi.Summoner{Name: "Test Summoner", Id: int64(1)}, Persist: &MockPersist{}}
 	putCache(testResp)
 	// Assert
 	if _, ok := allSummonersById[int64(1)]; !ok {
@@ -32,7 +32,7 @@ func TestFetchSummonerCache(t *testing.T) {
 	responseChannel := make(chan Response, 1)
 	// Build Data
 	context, _ := aetest.NewContext(nil)
-	testReq := Request{Type: "summoner", Key: "Test Summoner", Response: responseChannel, Context: context}
+	testReq := Request{Type: "summoner", Key: "Test Summoner", Response: responseChannel, Context: context, Persist: &MockPersist{}}
 	fetchCache(testReq)
 	// Assert
 	cacheResponse := <-responseChannel
@@ -56,7 +56,7 @@ func TestPutGamesCache(t *testing.T) {
 	// Build Data
 	gameList := []lapi.Game{lapi.Game{ChampionId: int64(10), GameId: int64(3), Stats: lapi.RawStats{}}, lapi.Game{ChampionId: int64(11), GameId: int64(4), Stats: lapi.RawStats{}}}
 	games := lapi.RecentGames{SummonerId: int64(1), Games: gameList}
-	testResp := Response{Type: "games", Value: games}
+	testResp := Response{Type: "games", Value: games, Persist: &MockPersist{}}
 	putCache(testResp)
 	// Assert
 	if value, ok := allGames[MatchKey{SummonerId: int64(1), MatchId: int64(3)}]; ok {
@@ -82,14 +82,14 @@ func TestExternalGetMatch(t *testing.T) {
 	// Build Data
 	gameList := []lapi.Game{lapi.Game{ChampionId: int64(10), GameId: int64(3), Stats: lapi.RawStats{}}, lapi.Game{ChampionId: int64(11), GameId: int64(4), Stats: lapi.RawStats{}}}
 	games := lapi.RecentGames{SummonerId: int64(1), Games: gameList}
-	testResp := Response{Type: "games", Value: games}
+	testResp := Response{Type: "games", Value: games, Persist: &MockPersist{}}
 	putCache(testResp)
 	exit := make(chan bool, 1)
 	get := make(chan Request, 10)
 	put := make(chan Response, 10)
 	go RunCache(exit, get, put)
 	context, _ := aetest.NewContext(nil)
-	match, matchErr := GetMatch(int64(4), int64(1), get, put, context)
+	match, matchErr := GetMatch(int64(4), int64(1), get, put, context, &MockPersist{})
 	if matchErr != nil {
 		t.Errorf("Failed to get match: %s", matchErr.Error())
 		t.FailNow()
@@ -100,10 +100,21 @@ func TestExternalGetMatch(t *testing.T) {
 	}
 
 	// Now fetch a match that isn't there.
-	_, noMatchErr := GetMatch(int64(6), int64(1), get, put, context)
+	_, noMatchErr := GetMatch(int64(6), int64(1), get, put, context, &MockPersist{})
 	if noMatchErr == nil {
 		t.Log("Found match that doesn't exist.")
 		t.FailNow()
 	}
 
+}
+
+type MockPersist struct {
+}
+
+func (mp *MockPersist) PutObject(objType string, id string, thing interface{}) error {
+	return nil
+}
+
+func (mp *MockPersist) GetObject(objType string, id string, thing interface{}) error {
+	return nil
 }

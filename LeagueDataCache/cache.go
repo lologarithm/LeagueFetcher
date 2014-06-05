@@ -15,12 +15,20 @@ const (
 	cacheTimeoutMinutes = 30
 )
 
+type PersistanceProvider interface {
+	//PutSummoner(lapi.Summoner)
+	//PutMatch(lapi.Game)
+	PutObject(string, string, interface{}) error
+	GetObject(string, string, interface{}) error
+}
+
 // TODO: Maybe merge the request/response together?
 type Request struct {
 	Response chan Response
 	Type     string
 	Key      interface{}
 	Context  appengine.Context
+	Persist  PersistanceProvider
 }
 
 type Response struct {
@@ -29,6 +37,7 @@ type Response struct {
 	Value   interface{}
 	Type    string
 	Ok      bool
+	Persist PersistanceProvider
 }
 
 var CacheRunning bool
@@ -65,6 +74,7 @@ func putCache(resp Response) {
 			allSummonersById[summoner.Id] = summoner
 			key := NormalizeString(summoner.Name)
 			allSummonersByName[key] = summoner
+			resp.Persist.PutObject("Summoner", key, summoner)
 		}
 	case "champion":
 		// For now the local cache will handle this.
@@ -82,6 +92,7 @@ func putCache(resp Response) {
 				}
 				// Always re-cache here for updated match time.
 				allGames[key] = match
+				resp.Persist.PutObject("Match", key.String(), match)
 			}
 		} else {
 			resp.Context.Infof("Cache: Failed to get game, not a game key!")
@@ -91,6 +102,7 @@ func putCache(resp Response) {
 		if key, ok := resp.Key.(MatchKey); ok {
 			if game, ok := resp.Value.(lapi.Game); ok {
 				allGames[key] = game
+				resp.Persist.PutObject("Match", key.String(), game)
 			}
 		}
 	case "rankedData":
@@ -116,6 +128,13 @@ func wrappedFetch(request Request, api *lapi.LolFetcher) {
 			if summoner, ok := allSummonersByName[key]; ok {
 				response.Ok = true
 				response.Value = summoner
+			} else {
+				var persistSummoner *lapi.Summoner
+				persistErr := request.Persist.GetObject("Summoner", key, &persistSummoner)
+				if persistErr == nil {
+					response.Value = *persistSummoner
+					response.Ok = true
+				}
 			}
 		}
 	case "champion":
@@ -144,7 +163,7 @@ func wrappedFetch(request Request, api *lapi.LolFetcher) {
 					request.Context.Warningf("Cached games are old or no games found.")
 				}
 			} else {
-				request.Context.Warningf("Cache: No games foudn for that id.")
+				request.Context.Warningf("Cache: No games found for that id.")
 			}
 		} else {
 			request.Context.Warningf("Cache: Not int key for fetching games.")
@@ -158,8 +177,17 @@ func wrappedFetch(request Request, api *lapi.LolFetcher) {
 					response.Ok = true
 				}
 			} else {
-				request.Context.Warningf("Cache: Failed to get game, key not in dict: %v", key)
-				request.Context.Warningf("Cache: gamesBySummoner dump:\n%v", gamesBySummoner[key.SummonerId])
+				var persistGame *lapi.Game
+				persistErr := request.Persist.GetObject("Match", key.String(), &persistGame)
+				if persistErr != nil {
+					request.Context.Warningf("Cache: Failed to get game: %v", key)
+				} else {
+					gameDetail, fErr := convertGameToMatchDetail(*persistGame, api)
+					if fErr == nil {
+						response.Value = gameDetail
+						response.Ok = true
+					}
+				}
 			}
 		} else {
 			request.Context.Warningf("Cache: Failed to get game, not a game key!")
@@ -177,7 +205,6 @@ func wrappedFetch(request Request, api *lapi.LolFetcher) {
 			}
 		}
 	}
-
 	request.Response <- *response
 }
 

@@ -31,9 +31,9 @@ func GetChampion(id int64, get chan Request, c appengine.Context) (lapi.Champion
 }
 
 // Fetch Summoner from cache goroutine
-func GetSummoner(name string, get chan Request, put chan Response, c appengine.Context) (lapi.Summoner, error) {
+func GetSummoner(name string, get chan Request, put chan Response, c appengine.Context, persist PersistanceProvider) (lapi.Summoner, error) {
 	name = NormalizeString(name)
-	value, getErr := goGet(Request{Type: "summoner", Key: name, Context: c}, get)
+	value, getErr := goGet(Request{Type: "summoner", Key: name, Context: c, Persist: persist}, get)
 	if getErr != nil {
 		client := getClient(c)
 		api := &lapi.LolFetcher{Get: client.Get, Log: c}
@@ -44,7 +44,7 @@ func GetSummoner(name string, get chan Request, put chan Response, c appengine.C
 		}
 		if s, gotOk := summoners[name]; gotOk {
 			// Cache value before returning.
-			goPut(s, "summoner", put, c)
+			goPut(s, "summoner", put, c, persist)
 			return s, nil
 		} else {
 			return lapi.Summoner{}, CacheError{message: "Failed to retrieve summoner."}
@@ -56,7 +56,7 @@ func GetSummoner(name string, get chan Request, put chan Response, c appengine.C
 }
 
 // Fetch Summoner recent match history typed version
-func GetSummonerMatchesSimple(id int64, get chan Request, put chan Response, c appengine.Context) (MatchHistory, error) {
+func GetSummonerMatchesSimple(id int64, get chan Request, put chan Response, c appengine.Context, persist PersistanceProvider) (MatchHistory, error) {
 	value, getErr := goGet(Request{Type: "games", Key: id, Context: c}, get)
 	if getErr != nil {
 		client := getClient(c)
@@ -66,7 +66,7 @@ func GetSummonerMatchesSimple(id int64, get chan Request, put chan Response, c a
 			return MatchHistory{}, fetchErr
 		}
 		if len(games.Games) > 0 {
-			goPut(games, "games", put, c)
+			goPut(games, "games", put, c, persist)
 			matches, fErr := convertGamesToMatchHistory(id, games.Games, func(id int64, api *lapi.LolFetcher) (lapi.Champion, error) {
 				champ, fErr := GetChampion(id, get, c)
 				return champ, fErr
@@ -80,8 +80,9 @@ func GetSummonerMatchesSimple(id int64, get chan Request, put chan Response, c a
 }
 
 // Typed cache get for a match
-func GetMatch(matchId int64, summonerId int64, get chan Request, put chan Response, c appengine.Context) (MatchDetail, error) {
-	value, getErr := goGet(Request{Type: "game", Key: MatchKey{MatchId: matchId, SummonerId: summonerId}, Context: c}, get)
+func GetMatch(matchId int64, summonerId int64, get chan Request, put chan Response, c appengine.Context, persist PersistanceProvider) (MatchDetail, error) {
+	value, getErr := goGet(Request{Type: "game", Key: MatchKey{MatchId: matchId, SummonerId: summonerId}, Context: c, Persist: persist}, get)
+
 	client := getClient(c)
 	api := &lapi.LolFetcher{Get: client.Get, Log: c}
 	if getErr != nil {
@@ -94,6 +95,7 @@ func GetMatch(matchId int64, summonerId int64, get chan Request, put chan Respon
 			missingIds = append(missingIds, p.SummonerId)
 		}
 	}
+
 	if len(missingIds) > 0 {
 		fetchedSummoners, apiErr := api.GetSummonersById(missingIds)
 		if apiErr != nil {
@@ -104,9 +106,10 @@ func GetMatch(matchId int64, summonerId int64, get chan Request, put chan Respon
 			}
 			fetchedSummoners = fs
 		}
+
 		for _, value := range fetchedSummoners {
 			// Cache this guy
-			goPut(value, "summoner", put, c)
+			goPut(value, "summoner", put, c, persist)
 			// Put this summoner name where it belongs.
 			// This is inefficient but there is never more than 10 players.. so meh.
 			for i := 0; i < len(game.FellowPlayers); i++ {
@@ -163,7 +166,7 @@ func GetSummonerRankedData(s lapi.Summoner, get chan Request, put chan Response,
 			}
 		}
 
-		goPut(srd, "rankedData", put, c)
+		goPut(srd, "rankedData", put, c, nil)
 		return srd, nil
 	}
 
@@ -188,8 +191,8 @@ func goGet(request Request, get chan Request) (interface{}, error) {
 }
 
 // Generic function to cache a value
-func goPut(value interface{}, valType string, put chan Response, c appengine.Context) {
-	r := Response{Value: value, Type: valType, Context: c}
+func goPut(value interface{}, valType string, put chan Response, c appengine.Context, pp PersistanceProvider) {
+	r := Response{Value: value, Type: valType, Context: c, Persist: pp}
 	put <- r
 }
 

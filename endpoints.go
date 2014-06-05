@@ -41,6 +41,7 @@ func init() {
 	exit := make(chan bool, 1)
 	lolCache.SetupCache()
 	lolCache.CacheRunning = true
+
 	go lolCache.RunCache(exit, cacheGet, cachePut)
 
 	http.HandleFunc("/", defaultHandler)
@@ -83,13 +84,13 @@ func defaultHandler(w http.ResponseWriter, r *http.Request) {
 
 func handleRecentMatches(w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {
 	c := appengine.NewContext(r)
-	summoner, fetchErr := lolCache.GetSummoner(html.UnescapeString(r.FormValue("name")), cacheGet, cachePut, c)
+	summoner, fetchErr := lolCache.GetSummoner(html.UnescapeString(r.FormValue("name")), cacheGet, cachePut, c, &lolCache.MemcachePersistance{Context: c})
 
 	if fetchErr != nil {
 		returnErrJson(fetchErr, w)
 		return
 	}
-	matches, fetchErr := lolCache.GetSummonerMatchesSimple(summoner.Id, cacheGet, cachePut, c)
+	matches, fetchErr := lolCache.GetSummonerMatchesSimple(summoner.Id, cacheGet, cachePut, c, &lolCache.MemcachePersistance{Context: c})
 	if fetchErr != nil {
 		returnErrJson(fetchErr, w)
 		return
@@ -110,7 +111,7 @@ func handleMatchDetails(w http.ResponseWriter, r *http.Request, cacheGet chan lo
 		return
 	}
 
-	match, fetchErr := lolCache.GetMatch(matchId, summonerId, cacheGet, cachePut, c)
+	match, fetchErr := lolCache.GetMatch(matchId, summonerId, cacheGet, cachePut, c, &lolCache.MemcachePersistance{Context: c})
 	if fetchErr != nil {
 		returnErrJson(fetchErr, w)
 		return
@@ -136,7 +137,7 @@ func handleChampion(w http.ResponseWriter, r *http.Request, cacheGet chan lolCac
 
 func handleRankedData(w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {
 	c := appengine.NewContext(r)
-	summoner, fetchErr := lolCache.GetSummoner(html.UnescapeString(r.FormValue("name")), cacheGet, cachePut, c)
+	summoner, fetchErr := lolCache.GetSummoner(html.UnescapeString(r.FormValue("name")), cacheGet, cachePut, c, &lolCache.MemcachePersistance{Context: c})
 	if fetchErr != nil {
 		returnErrJson(fetchErr, w)
 		return

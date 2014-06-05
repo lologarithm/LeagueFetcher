@@ -102,9 +102,13 @@ func putCache(resp Response) {
 }
 
 func fetchCache(request Request) {
-	response := &Response{Ok: false}
 	client := urlfetch.Client(request.Context)
 	api := &lapi.LolFetcher{Get: client.Get, Log: request.Context}
+	wrappedFetch(request, api)
+}
+
+func wrappedFetch(request Request, api *lapi.LolFetcher) {
+	response := &Response{Ok: false}
 	switch request.Type {
 	case "summoner":
 		if key, ok := request.Key.(string); ok {

@@ -6,7 +6,7 @@ function ($, React, moment, summonerStore, RankedStatsElement) {
 		
 		render: function () {
 			if (this.props.name !== '') {
-				var elements = summonerStore.getRankedData().Champions.map(function (a) {
+				var elements = summonerStore.getRankedData(this.props.name).Champions.map(function (a) {
 					return <RankedStatsElement data={a} />;
 				})
 

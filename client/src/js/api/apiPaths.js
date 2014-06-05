@@ -8,7 +8,7 @@ define([], function () {
 
 		},
 		MATCH : {
-			GET_MATCH : function(id){ return '/api/match?id=' + id }
+			GET_MATCH : function(matchId, summonerId){ return '/api/match?matchId=' + matchId + '&summonerId=' + summonerId }
 		}
 	};
 })

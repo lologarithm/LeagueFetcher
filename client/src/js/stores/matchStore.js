@@ -21,9 +21,9 @@ define(['/js/settings.js', '/js/api/matchAPI.js', '/js/mockServer/mockMatchAPI.j
 			});
 		},
 
-		getMatch: function (id) {
+		getMatch: function (id, summonerId) {
 			if(matches[id] === undefined) {
-				api.getMatch(id, $.proxy(function (data) {
+				api.getMatch(id, summonerId, $.proxy(function (data) {
 					matches[id] = data;
 					this.notifyListeners();
 				}, this))

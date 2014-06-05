@@ -16,7 +16,7 @@ function ($, React, moment, summonerStore, matchStore, MatchHistoryElement, Matc
 					return this.state.target == a.GameId;
 				}, this)).map($.proxy(function (a) {
 					return <Popover title={a.GameId} style={{'top': this.state.targetPosition.top, 'left': this.state.targetPosition.left, 'max-width':'100000px'}} >
-								<MatchDetails data={matchStore.getMatch(a.GameId)} name={this.props.name} />
+								<MatchDetails data={matchStore.getMatch(a.GameId, summonerStore.getMatchHistory(this.props.name).SummonerId)} name={this.props.name} />
 							</Popover>;
 				}, this))[0];
 

@@ -11,7 +11,7 @@ define(['jquery', 'react', 'js/components/views/matchHistoryView.js', 'js/compon
 		render: function () {
 			var style = this.state.championName !== '' ? {'width':'500px', 'margin':'50px auto 20px'} : {'width':'500px', 'margin':'200px auto 20px'};
 			//<img src="/imgs/logo.jpg" />
-			
+
 			return <div className="flexContainer flexColumn">
 						<div className='flexContainer flexColumn flexNone marginAnimate' style={style}>
 							<div className='flexNone margin-bottom-s' style={{"font-size": 25}}>
@@ -23,8 +23,8 @@ define(['jquery', 'react', 'js/components/views/matchHistoryView.js', 'js/compon
 							</div>
 						</div>
 						<div className='flexContainer flex1'>
-							<MatchHistoryView className="flex1" name={this.state.championName} />
-							<RankedStatsView className="flex1" name={this.state.championName} />
+							<MatchHistoryView className="flex1" name={this.state.championName} searchName={this.commitSearch} />
+							<RankedStatsView className="flex1" name={this.state.championName} searchName={this.commitSearch} />
 						</div>
 					</div>
 		},
@@ -35,16 +35,16 @@ define(['jquery', 'react', 'js/components/views/matchHistoryView.js', 'js/compon
 
 		onKeyDown: function (e) {
 			if(e.keyCode === 13) {
-				this.commitSearch();
+				this.commitSearch(this.state.championInputName);
 			}
 		},
 
 		onClick: function () {
-			this.commitSearch();
+			this.commitSearch(this.state.championInputName);
 		},
 
 		commitSearch: function(name) {
-			this.setState({ championName : this.state.championInputName });
+			this.setState({ championName : name, championInputName: name });
 			$(this.refs.txtInput.getDOMNode()).blur();
 		}
 	});

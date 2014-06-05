@@ -21,9 +21,18 @@ define(['/js/settings.js', '/js/api/matchAPI.js', '/js/mockServer/mockMatchAPI.j
 			});
 		},
 
-		getMatch: function (id, summonerId) {
+		getMatch: function (id, summonerId, matchObject, name) {
 			if(matches[id] === undefined) {
 				api.getMatch(id, summonerId, $.proxy(function (data) {
+					if(matchObject !== undefined && name !== undefined && data.FellowPlayers.length > 0) {
+						data.FellowPlayers = data.FellowPlayers.concat({ 
+													ChampionName: matchObject.ChampionName, 
+													SummonerName: name, 
+													Side: matchObject.Side 
+												});
+					}
+
+
 					matches[id] = data;
 					this.notifyListeners();
 				}, this))

@@ -12,11 +12,11 @@ define(['jquery', 'react', 'js/components/views/matchHistoryView.js', 'js/compon
 			var style = this.state.championName !== '' ? {'width':'500px', 'margin':'50px auto 20px'} : {'width':'500px', 'margin':'200px auto 20px'};
 
 			return <div className="flexContainer flexColumn">
-						<div classname='flexContainer flexColumn flexNone marginAnimate' style={style}>
+						<div className='flexContainer flexColumn flexNone marginAnimate' style={style}>
 							<div className='flexNone margin-bottom-s' style={{"font-size": 25}}>
 								Enter Summoner Name:
 							</div>
-							<div className='flexContainer flexNone marginAnimate'>
+							<div className='flexContainer flexNone'>
 								<input ref="txtInput" type="text" className='flex1' value={this.state.championInputName} onChange={this.onChange} onKeyDown={this.onKeyDown} />
 								<button type="button" className='flexNone btn btn-primary' style={{'margin-left':'3px'}} onClick={this.onClick} >Search</button>
 							</div>

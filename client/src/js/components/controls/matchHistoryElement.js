@@ -5,7 +5,7 @@ define(['jquery', 'react', 'moment', 'js/stores/summonerStore.js'], function ($,
 			var kda = Math.round((this.props.data.Stats.ChampionsKilled + this.props.data.Stats.Assists) / (this.props.data.Stats.NumDeaths || 1) * 100) / 100;
 			var elmStyle = this.props.data.Stats.Win ? {'border-top':'2px solid green'} : {'border-top':'2px solid red'};
 
-			return <div className='matchHistoryElement padding-m margin-bottom-m' style={elmStyle} >
+			return this.transferPropsTo(<div className='matchHistoryElement padding-m margin-bottom-m' style={elmStyle} >
 						<div>
 							<span>Champion Played: {this.props.data.ChampionName}</span>
 							<span style={{'display':'inline-block', 'float':'right'}}>
@@ -20,7 +20,7 @@ define(['jquery', 'react', 'moment', 'js/stores/summonerStore.js'], function ($,
 						</div>
 						<div>Game Mode: { this.props.data.GameMode }</div>
 						<div>IP Earned: { this.props.data.IpEarned }</div>
-					</div>;
+					</div>);
 		}
 	});
 

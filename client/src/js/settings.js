@@ -1,5 +1,5 @@
 define([], function () {
 	return {
-		useLocal: false
+		useLocal: true
 	}
 })

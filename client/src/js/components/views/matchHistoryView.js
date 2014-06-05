@@ -6,7 +6,7 @@ define(['jquery', 'react', 'moment', 'js/stores/summonerStore.js', '/js/componen
 			if(this.props.name !== '') {
 				return <div style={{'width':'500px', 'margin':'10px auto 0'}}>
 							<h3>Match History</h3>
-							<MatchHistoryPanel className="margin-top-m" name={this.props.name} />
+							<MatchHistoryPanel className="margin-top-m" name={this.props.name} searchName={this.props.searchName} />
 						</div>;
 			} else {
 				return <div></div>;

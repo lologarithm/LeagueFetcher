@@ -32,13 +32,15 @@ const (
 )
 
 type RemoteGet func(url string) (*http.Response, error)
-type RemoteLog func(string, ...interface{})
+type Logger interface {
+	Infof(string, ...interface{})
+}
 
 var ApiKey string
 
 type LolFetcher struct {
 	Get RemoteGet
-	Log RemoteLog
+	Log Logger
 }
 
 func (lf *LolFetcher) makeUrl(version string, method string) string {
@@ -57,21 +59,21 @@ func (lf *LolFetcher) makeRequest(url string, value interface{}) {
 	st := time.Now().UnixNano()
 	resp, err := lf.Get(url)
 	if err != nil {
-		lf.Log("Failed to open conn: %s\n", err.Error())
+		lf.Log.Infof("Failed to open conn: %s\n", err.Error())
 		return
 	}
 
 	body, bodyErr := ioutil.ReadAll(resp.Body)
 	if bodyErr != nil {
-		lf.Log("Failed to open conn: %s\n", err.Error())
+		lf.Log.Infof("Failed to open conn: %s\n", err.Error())
 		return
 	}
 
 	unmarshErr := json.Unmarshal(body, value)
 	if unmarshErr != nil {
-		lf.Log("Failed to unmarshal json: %s\n", unmarshErr.Error())
+		lf.Log.Infof("Failed to unmarshal json: %s\n", unmarshErr.Error())
 	}
-	lf.Log("Request (%s) Took: %.4fms\n", url, (float64(time.Now().UnixNano()-st))/float64(1000000.0))
+	lf.Log.Infof("Request (%s) Took: %.4fms\n", url, (float64(time.Now().UnixNano()-st))/float64(1000000.0))
 }
 
 func (lf *LolFetcher) GetSummonerByName(name string) (summoners map[string]Summoner) {
@@ -123,6 +125,7 @@ func (lf *LolFetcher) GetAllChampions() (champs ChampionList) {
 
 func (lf *LolFetcher) GetChampion(id int64) (champ Champion) {
 	if id <= 0 {
+		champ.Name = "Total"
 		return
 	}
 	params := "&champData=all"

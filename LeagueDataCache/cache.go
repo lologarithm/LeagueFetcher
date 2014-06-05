@@ -31,6 +31,8 @@ type Response struct {
 	Ok      bool
 }
 
+var CacheRunning bool
+
 // Cache dictionaries.
 var allSummonersByName map[string]lapi.Summoner
 var allSummonersById map[int64]lapi.Summoner

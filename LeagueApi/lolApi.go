@@ -88,7 +88,7 @@ func (lf *LolFetcher) makeRequest(url string, value interface{}) error {
 		}
 	}
 
-	lf.Log.Infof("Request (%s) Took: %.4fms\n", url, (float64(time.Now().UnixNano()-st))/float64(1000000.0))
+	lf.Log.Infof("LOLAPI Fetch (%s) Took: %.4fms\n", url, (float64(time.Now().UnixNano()-st))/float64(1000000.0))
 	return nil
 }
 

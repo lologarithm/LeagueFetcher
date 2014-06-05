@@ -40,6 +40,7 @@ func init() {
 	cachePut := make(chan lolCache.Response, 10)
 	exit := make(chan bool, 1)
 	lolCache.SetupCache()
+	lolCache.CacheRunning = True
 	go lolCache.RunCache(exit, cacheGet, cachePut)
 
 	http.HandleFunc("/", defaultHandler)
@@ -72,7 +73,7 @@ func timeEndpoint(endFunc endpointFunc, w http.ResponseWriter, r *http.Request, 
 	c := appengine.NewContext(r)
 	st := time.Now().UnixNano()
 	endFunc(w, r, cacheGet, cachePut)
-	c.Infof("Request (%s) Took: %.4fms\n", r.URL, (float64(time.Now().UnixNano()-st))/float64(1000000.0))
+	c.Infof("API Query (%s) Took: %.4fms\n", r.URL, (float64(time.Now().UnixNano()-st))/float64(1000000.0))
 }
 
 func defaultHandler(w http.ResponseWriter, r *http.Request) {

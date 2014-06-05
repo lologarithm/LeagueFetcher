@@ -125,6 +125,7 @@ func (lf *LolFetcher) GetAllChampions() (champs ChampionList) {
 
 func (lf *LolFetcher) GetChampion(id int64) (champ Champion) {
 	if id <= 0 {
+		champ.Name = "Total"
 		return
 	}
 	params := "&champData=all"

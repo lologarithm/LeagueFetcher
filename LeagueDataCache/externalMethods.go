@@ -36,7 +36,7 @@ func GetSummoner(name string, get chan Request, put chan Response, c appengine.C
 	value, getErr := goGet(Request{Type: "summoner", Key: name, Context: c}, get)
 	if getErr != nil {
 		client := getClient(c)
-		api := &lapi.LolFetcher{Get: client.Get, Log: c.Infof}
+		api := &lapi.LolFetcher{Get: client.Get, Log: c}
 		// Summoner not cached. Retrieving from LAPI
 		summoners := api.GetSummonerByName(name)
 		if s, gotOk := summoners[name]; gotOk {
@@ -57,7 +57,7 @@ func GetSummonerMatchesSimple(id int64, get chan Request, put chan Response, c a
 	value, getErr := goGet(Request{Type: "games", Key: fmt.Sprintf("%d", id), Context: c}, get)
 	if getErr != nil {
 		client := getClient(c)
-		api := &lapi.LolFetcher{Get: client.Get, Log: c.Infof}
+		api := &lapi.LolFetcher{Get: client.Get, Log: c}
 		games := api.GetRecentMatches(id)
 		if len(games.Games) > 0 {
 
@@ -78,7 +78,7 @@ func GetSummonerMatchesSimple(id int64, get chan Request, put chan Response, c a
 func GetMatch(id int64, get chan Request, put chan Response, c appengine.Context) (MatchDetail, error) {
 	value, getErr := goGet(Request{Type: "game", Key: fmt.Sprintf("%d", id), Context: c}, get)
 	client := getClient(c)
-	api := &lapi.LolFetcher{Get: client.Get, Log: c.Infof}
+	api := &lapi.LolFetcher{Get: client.Get, Log: c}
 	if getErr != nil {
 		return MatchDetail{}, CacheError{message: "Failed to retrieve game."}
 	}
@@ -113,7 +113,7 @@ func GetSummonerRankedData(s lapi.Summoner, get chan Request, put chan Response,
 	// 1. Check for cached data
 	value, getErr := goGet(Request{Type: "rankedData", Key: fmt.Sprintf("%d", s.Id), Context: c}, get)
 	client := getClient(c)
-	api := &lapi.LolFetcher{Get: client.Get, Log: c.Infof}
+	api := &lapi.LolFetcher{Get: client.Get, Log: c}
 	if getErr != nil {
 		srd.Summoner = s
 		srd.RankedTeamLeagues = make(map[string]lapi.League)

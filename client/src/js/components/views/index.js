@@ -9,7 +9,7 @@ define(['jquery', 'react', 'js/components/views/matchHistoryView.js', 'js/compon
 		},
 
 		render: function () {
-			var style = this.state.championName !== '' ? {'width':'125px'} : {'width':'275px'};
+			var style = this.state.championName !== '' ? {'margin': '0px auto', 'width':'125px'} : {'width':'500px', 'margin': '0px auto'};
 			//
 
 			return <div className="flexContainer flexColumn">

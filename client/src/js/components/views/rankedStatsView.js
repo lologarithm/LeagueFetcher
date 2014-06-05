@@ -6,7 +6,7 @@ function ($, React, moment, summonerStore, RankedStatsElement) {
 		
 		render: function () {
 			if (this.props.name !== '') {
-				var elements = summonerStore.getRankedData(this.props.name).Champions.map(function (a) {
+				var elements = summonerStore.getRankedData(this.props.name).Champions.sort(this.sortByMostPlayed).map(function (a) {
 					return <RankedStatsElement data={a} />;
 				})
 
@@ -20,6 +20,10 @@ function ($, React, moment, summonerStore, RankedStatsElement) {
 			} else {
 				return <div></div>;
 			}
+		},
+
+		sortByMostPlayed: function (a,b) {
+			return a.Stats.TotalSessionsPlayed > b.Stats.TotalSessionsPlayed ? -1 : 1;
 		},
 
 		componentDidMount: function ( ){

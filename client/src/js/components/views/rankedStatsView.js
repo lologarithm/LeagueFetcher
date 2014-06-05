@@ -1,5 +1,5 @@
 /** @jsx React.DOM */
-define(['jquery', 'react', 'moment', 'js/stores/summonerStore.js', 'js/components/controls/rankedStatsElements.js'], 
+define(['jquery', 'react', 'moment', 'js/stores/summonerStore.js', 'js/components/controls/rankedStatsElement.js'], 
 
 function ($, React, moment, summonerStore, RankedStatsElement) {
 	var RankedStatsView = React.createClass({
@@ -21,6 +21,18 @@ function ($, React, moment, summonerStore, RankedStatsElement) {
 				return <div></div>;
 			}
 		},
+
+		componentDidMount: function ( ){
+			summonerStore.addChangeListener(this.onChange);
+		},
+
+		componentWillUnmount: function () {
+			summonerStore.removeChangeListener(this.onChange);
+		},
+
+		onChange: function () {
+			this.setState({});
+		}
 	});
 
 	return RankedStatsView;

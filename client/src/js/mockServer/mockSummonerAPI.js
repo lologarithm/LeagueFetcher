@@ -2,11 +2,15 @@ define(['./mockMatchHistoryResponse.js', './mockRankedDataResponse.js'], functio
 	
 
 	function getMatchHistory(name, callback) {
-		return callback (matchHistory);
+		return setTimeout(function () {
+			callback (matchHistory);
+		}, 250);
 	}
 
 	function getRankedData(name, callback) {
-		return callback (rankedData);
+		return setTimeout(function () {
+			callback (rankedData);
+		}, 250);
 	}
 
 	return { 

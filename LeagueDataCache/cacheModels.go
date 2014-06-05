@@ -27,6 +27,10 @@ type MatchHistory struct {
 	Games      []MatchSimple
 }
 
+type MatchKey struct {
+	MatchId    int64
+	SummonerId int64
+}
 type MatchSimple struct {
 	ChampionName string     // Champion ID associated with game.
 	CreateDate   int64      // Date that end game data was recorded, specified as epoch milliseconds.

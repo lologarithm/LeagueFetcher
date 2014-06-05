@@ -6,7 +6,6 @@ import (
 	"appengine/urlfetch"
 	"fmt"
 	lapi "github.com/lologarithm/LeagueFetcher/LeagueApi"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -17,15 +16,17 @@ const (
 	cacheTimeoutMinutes = 30
 )
 
+// TODO: Maybe merge the request/response together?
 type Request struct {
 	Response chan Response
 	Type     string
-	Key      string
+	Key      interface{}
 	Context  appengine.Context
 }
 
 type Response struct {
 	Context appengine.Context
+	Key     interface{}
 	Value   interface{}
 	Type    string
 	Ok      bool
@@ -37,7 +38,7 @@ var allSummonersById map[int64]lapi.Summoner
 var allChampions map[int64]lapi.Champion
 var allLeagues map[int64]lapi.League
 var allTeams map[int64]lapi.Team
-var allGames map[int64]lapi.Game
+var allGames map[MatchKey]lapi.Game
 var gamesBySummoner map[int64][]lapi.Game
 var allRankedData map[int64]SummonerRankedData
 
@@ -68,22 +69,25 @@ func putCache(resp Response) {
 			allSummonersByName[key] = summoner
 		}
 	case "champion":
-		// For now the cache will handle this.
+		// For now the local cache will handle this.
 	case "games":
 		if matches, ok := resp.Value.(lapi.RecentGames); ok {
 			for _, match := range matches.Games {
 				match.ExpireTime = getExpireTime()
+				key := MatchKey{MatchId: match.GameId, SummonerId: matches.SummonerId}
 				// Don't put the match into the list of games for the summoner if it's already cached.
-				if _, ok := allGames[match.GameId]; !ok {
+				if _, ok := allGames[key]; !ok {
 					gamesBySummoner[matches.SummonerId] = append([]lapi.Game{match}, gamesBySummoner[matches.SummonerId]...)
 				}
 				// Always re-cache here for updated match time.
-				allGames[match.GameId] = match
+				allGames[key] = match
 			}
 		}
 	case "game":
-		if game, ok := resp.Value.(lapi.Game); ok {
-			allGames[game.GameId] = game
+		if key, ok := resp.Key.(MatchKey); ok {
+			if game, ok := resp.Value.(lapi.Game); ok {
+				allGames[key] = game
+			}
 		}
 	case "rankedData":
 		if data, ok := resp.Value.(SummonerRankedData); ok {
@@ -99,59 +103,53 @@ func fetchCache(request Request) {
 	api := &lapi.LolFetcher{Get: client.Get, Log: request.Context}
 	switch request.Type {
 	case "summoner":
-		request.Key = NormalizeString(request.Key)
-		if summoner, ok := allSummonersByName[request.Key]; ok {
-			response.Ok = true
-			response.Value = summoner
+		if key, ok := request.Key.(string); ok {
+			key = NormalizeString(key)
+			if summoner, ok := allSummonersByName[key]; ok {
+				response.Ok = true
+				response.Value = summoner
+			}
 		}
 	case "champion":
-		intKey, err := strconv.ParseInt(request.Key, 10, 64)
-		if err != nil {
-			break
+		if intKey, ok := request.Key.(int64); ok {
+			champ := fetchAndCacheChampion(intKey, api)
+			response.Value = champ
+			response.Ok = true
 		}
-		champ := fetchAndCacheChampion(intKey, api)
-		response.Value = champ
-		response.Ok = true
 	case "games":
-		intKey, err := strconv.ParseInt(request.Key, 10, 64)
-		if err != nil {
-			break
-		}
-		// If last fetch of game history is old, refetch game history.
-		if games, ok := gamesBySummoner[intKey]; ok {
-			if len(games) > 0 && games[0].ExpireTime > time.Now().Unix() {
-				sliceEnd := 10
-				if len(games) < 10 {
-					sliceEnd = len(games)
+		if intKey, ok := request.Key.(int64); ok {
+			// If last fetch of game history is old, refetch game history.
+			if games, ok := gamesBySummoner[intKey]; ok {
+				if len(games) > 0 && games[0].ExpireTime > time.Now().Unix() {
+					sliceEnd := 10
+					if len(games) < 10 {
+						sliceEnd = len(games)
+					}
+					matchHistory := convertGamesToMatchHistory(intKey, games[0:sliceEnd], fetchAndCacheChampion, api)
+					response.Value = matchHistory
+					response.Ok = true
+				} else {
+					fmt.Printf("Cached games are old or no games found.")
 				}
-				matchHistory := convertGamesToMatchHistory(intKey, games[0:sliceEnd], fetchAndCacheChampion, api)
-				response.Value = matchHistory
-				response.Ok = true
-			} else {
-				fmt.Printf("Cached games are old or no games found.")
 			}
 		}
 	case "game":
-		intKey, err := strconv.ParseInt(request.Key, 10, 64)
-		if err != nil {
-			break
-		}
-		if game, ok := allGames[intKey]; ok {
-			response.Value = convertGameToMatchDetail(game, api)
-			response.Ok = true
+		if key, ok := request.Key.(MatchKey); ok {
+			if game, ok := allGames[key]; ok {
+				response.Value = convertGameToMatchDetail(game, api)
+				response.Ok = true
+			}
 		}
 	case "team":
 	case "rankedData":
-		intKey, err := strconv.ParseInt(request.Key, 10, 64)
-		if err != nil {
-			break
-		}
-		if data, ok := allRankedData[intKey]; ok {
-			if data.ExpireTime > time.Now().Unix() {
-				response.Value = data
-				response.Ok = true
-			} else {
-				fmt.Printf("Cached ranked data is too old.")
+		if intKey, ok := request.Key.(int64); ok {
+			if data, ok := allRankedData[intKey]; ok {
+				if data.ExpireTime > time.Now().Unix() {
+					response.Value = data
+					response.Ok = true
+				} else {
+					fmt.Printf("Cached ranked data is too old.")
+				}
 			}
 		}
 	}
@@ -162,7 +160,7 @@ func fetchCache(request Request) {
 func setupCache() {
 	loadChampions(championCache)
 	loadSummoners(summonerCache)
-	allGames = make(map[int64]lapi.Game, 1)
+	allGames = make(map[MatchKey]lapi.Game, 1)
 	gamesBySummoner = make(map[int64][]lapi.Game, 1)
 	allRankedData = make(map[int64]SummonerRankedData, 1)
 }

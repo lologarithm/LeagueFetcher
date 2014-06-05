@@ -90,12 +90,18 @@ func handleRecentMatches(w http.ResponseWriter, r *http.Request, cacheGet chan l
 
 func handleMatchDetails(w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {
 	c := appengine.NewContext(r)
-	intKey, intErr := strconv.ParseInt(r.FormValue("id"), 10, 64)
+	matchId, intErr := strconv.ParseInt(r.FormValue("matchId"), 10, 64)
 	if intErr != nil {
 		returnEmptyJson(w)
 		return
 	}
-	match, _ := lolCache.GetMatch(intKey, cacheGet, cachePut, c)
+	summonerId, intErr := strconv.ParseInt(r.FormValue("summonerId"), 10, 64)
+	if intErr != nil {
+		returnEmptyJson(w)
+		return
+	}
+
+	match, _ := lolCache.GetMatch(matchId, summonerId, cacheGet, cachePut, c)
 	writeJson(w, match)
 }
 

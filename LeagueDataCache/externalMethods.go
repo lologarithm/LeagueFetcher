@@ -3,7 +3,6 @@ package LeagueDataCache
 import (
 	"appengine"
 	"appengine/urlfetch"
-	"fmt"
 	lapi "github.com/lologarithm/LeagueFetcher/LeagueApi"
 	"net/http"
 	"strconv"
@@ -19,7 +18,7 @@ func GetChampion(id int64, get chan Request, c appengine.Context) (lapi.Champion
 		return lapi.Champion{}, nil
 	}
 	result := make(chan Response, 1)
-	cReq := Request{Type: "champion", Key: fmt.Sprintf("%d", id), Response: result, Context: c}
+	cReq := Request{Type: "champion", Key: id, Response: result, Context: c}
 	get <- cReq
 	champResponse := <-result
 	if champResponse.Ok {
@@ -54,7 +53,7 @@ func GetSummoner(name string, get chan Request, put chan Response, c appengine.C
 
 // Fetch Summoner recent match history typed version
 func GetSummonerMatchesSimple(id int64, get chan Request, put chan Response, c appengine.Context) (MatchHistory, error) {
-	value, getErr := goGet(Request{Type: "games", Key: fmt.Sprintf("%d", id), Context: c}, get)
+	value, getErr := goGet(Request{Type: "games", Key: id, Context: c}, get)
 	if getErr != nil {
 		client := getClient(c)
 		api := &lapi.LolFetcher{Get: client.Get, Log: c}
@@ -75,8 +74,8 @@ func GetSummonerMatchesSimple(id int64, get chan Request, put chan Response, c a
 }
 
 // Typed cache get for a match
-func GetMatch(id int64, get chan Request, put chan Response, c appengine.Context) (MatchDetail, error) {
-	value, getErr := goGet(Request{Type: "game", Key: fmt.Sprintf("%d", id), Context: c}, get)
+func GetMatch(matchId int64, summonerId int64, get chan Request, put chan Response, c appengine.Context) (MatchDetail, error) {
+	value, getErr := goGet(Request{Type: "game", Key: MatchKey{MatchId: matchId, SummonerId: summonerId}, Context: c}, get)
 	client := getClient(c)
 	api := &lapi.LolFetcher{Get: client.Get, Log: c}
 	if getErr != nil {
@@ -111,7 +110,7 @@ func GetMatch(id int64, get chan Request, put chan Response, c appengine.Context
 
 func GetSummonerRankedData(s lapi.Summoner, get chan Request, put chan Response, c appengine.Context) (srd SummonerRankedData) {
 	// 1. Check for cached data
-	value, getErr := goGet(Request{Type: "rankedData", Key: fmt.Sprintf("%d", s.Id), Context: c}, get)
+	value, getErr := goGet(Request{Type: "rankedData", Key: s.Id, Context: c}, get)
 	client := getClient(c)
 	api := &lapi.LolFetcher{Get: client.Get, Log: c}
 	if getErr != nil {
@@ -120,7 +119,7 @@ func GetSummonerRankedData(s lapi.Summoner, get chan Request, put chan Response,
 		// 1. Get RankedStats
 		stats := api.GetSummonerRankedStats(s.Id)
 		for index, stat := range stats.Champions {
-			cVal, _ := goGet(Request{Type: "champion", Key: fmt.Sprintf("%d", stat.Id), Context: c}, get)
+			cVal, _ := goGet(Request{Type: "champion", Key: stat.Id, Context: c}, get)
 			champ, _ := cVal.(lapi.Champion)
 			stat.ChampionName = champ.Name
 			stats.Champions[index] = stat

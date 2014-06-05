@@ -24,6 +24,9 @@ func storeChampions(file string) {
 }
 
 func loadChampions(file string) {
+	if allChampions != nil {
+		return
+	}
 	allChampions = make(map[int64]lapi.Champion, 100)
 	champData, readErr := ioutil.ReadFile(file)
 	if readErr != nil {
@@ -41,17 +44,24 @@ func loadChampions(file string) {
 	}
 }
 
-func fetchAndCacheChampion(id int64, api *lapi.LolFetcher) lapi.Champion {
+func fetchAndCacheChampion(id int64, api *lapi.LolFetcher) (lapi.Champion, error) {
 	if allChampions == nil || len(allChampions) == 0 {
-		champs := api.GetAllChampions()
+		champs, fetchErr := api.GetAllChampions()
+		if fetchErr != nil {
+			return lapi.Champion{}, fetchErr
+		}
 		for _, champion := range champs.Data {
 			allChampions[champion.Id] = champion
 		}
 	}
 	champ, ok := allChampions[id]
 	if !ok {
-		champ = api.GetChampion(id)
-		allChampions[champ.Id] = champ
+		fetchedCh, err := api.GetChampion(id)
+		if err != nil {
+			return fetchedCh, err
+		}
+		allChampions[champ.Id] = fetchedCh
+		champ = fetchedCh
 	}
-	return champ
+	return champ, nil
 }

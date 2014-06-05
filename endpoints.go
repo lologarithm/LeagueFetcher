@@ -39,6 +39,7 @@ func init() {
 	cacheGet := make(chan lolCache.Request, 10)
 	cachePut := make(chan lolCache.Response, 10)
 	exit := make(chan bool, 1)
+	lolCache.SetupCache()
 	go lolCache.RunCache(exit, cacheGet, cachePut)
 
 	http.HandleFunc("/", defaultHandler)
@@ -60,6 +61,10 @@ func init() {
 	http.HandleFunc("/api/match", func(w http.ResponseWriter, req *http.Request) {
 		timeEndpoint(handleMatchDetails, w, req, cacheGet, cachePut)
 	})
+	http.HandleFunc("/task/cacheGames", func(w http.ResponseWriter, req *http.Request) {
+		timeEndpoint(handleGameCache, w, req, cacheGet, cachePut)
+	})
+	http.HandleFunc("/log", handleLog)
 }
 
 // Wrapper function to time the endpoint call.
@@ -77,14 +82,17 @@ func defaultHandler(w http.ResponseWriter, r *http.Request) {
 
 func handleRecentMatches(w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {
 	c := appengine.NewContext(r)
-	summoner, err := lolCache.GetSummoner(html.UnescapeString(r.FormValue("name")), cacheGet, cachePut, c)
+	summoner, fetchErr := lolCache.GetSummoner(html.UnescapeString(r.FormValue("name")), cacheGet, cachePut, c)
 
-	if err != nil {
-		returnEmptyJson(w)
-		c.Infof("Failure To Get Summoner: %s\n", err.Error())
+	if fetchErr != nil {
+		returnErrJson(fetchErr, w)
 		return
 	}
-	matches, _ := lolCache.GetSummonerMatchesSimple(summoner.Id, cacheGet, cachePut, c)
+	matches, fetchErr := lolCache.GetSummonerMatchesSimple(summoner.Id, cacheGet, cachePut, c)
+	if fetchErr != nil {
+		returnErrJson(fetchErr, w)
+		return
+	}
 	writeJson(w, matches)
 }
 
@@ -92,16 +100,21 @@ func handleMatchDetails(w http.ResponseWriter, r *http.Request, cacheGet chan lo
 	c := appengine.NewContext(r)
 	matchId, intErr := strconv.ParseInt(r.FormValue("matchId"), 10, 64)
 	if intErr != nil {
-		returnEmptyJson(w)
+		returnErrJson(intErr, w)
 		return
 	}
 	summonerId, intErr := strconv.ParseInt(r.FormValue("summonerId"), 10, 64)
 	if intErr != nil {
-		returnEmptyJson(w)
+		returnErrJson(intErr, w)
 		return
 	}
 
-	match, _ := lolCache.GetMatch(matchId, summonerId, cacheGet, cachePut, c)
+	match, fetchErr := lolCache.GetMatch(matchId, summonerId, cacheGet, cachePut, c)
+	if fetchErr != nil {
+		returnErrJson(fetchErr, w)
+		return
+	}
+
 	writeJson(w, match)
 }
 
@@ -112,9 +125,9 @@ func handleChampion(w http.ResponseWriter, r *http.Request, cacheGet chan lolCac
 		returnEmptyJson(w)
 		return
 	}
-	champ, err := lolCache.GetChampion(champId, cacheGet, c)
-	if err != nil {
-		returnEmptyJson(w)
+	champ, fetchErr := lolCache.GetChampion(champId, cacheGet, c)
+	if fetchErr != nil {
+		returnErrJson(fetchErr, w)
 		return
 	}
 	writeJson(w, champ)
@@ -122,18 +135,30 @@ func handleChampion(w http.ResponseWriter, r *http.Request, cacheGet chan lolCac
 
 func handleRankedData(w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {
 	c := appengine.NewContext(r)
-	summoner, err := lolCache.GetSummoner(html.UnescapeString(r.FormValue("name")), cacheGet, cachePut, c)
-	if err != nil {
-		returnEmptyJson(w)
+	summoner, fetchErr := lolCache.GetSummoner(html.UnescapeString(r.FormValue("name")), cacheGet, cachePut, c)
+	if fetchErr != nil {
+		returnErrJson(fetchErr, w)
 		return
 	}
 
-	data := lolCache.GetSummonerRankedData(summoner, cacheGet, cachePut, c)
+	data, fetchErr := lolCache.GetSummonerRankedData(summoner, cacheGet, cachePut, c)
+	if fetchErr != nil {
+		returnErrJson(fetchErr, w)
+		return
+	}
 	writeJson(w, data)
+}
+
+func handleGameCache(w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {
 }
 
 func returnEmptyJson(w http.ResponseWriter) {
 	w.Write([]byte("{}"))
+}
+
+func returnErrJson(e error, w http.ResponseWriter) {
+	msg := fmt.Sprintf("{\"error\": \"%s\"}", e.Error())
+	w.Write([]byte(msg))
 }
 
 func writeJson(w http.ResponseWriter, data interface{}) {
@@ -143,6 +168,11 @@ func writeJson(w http.ResponseWriter, data interface{}) {
 		return
 	}
 	w.Write(dataJson)
+}
+
+func handleLog(w http.ResponseWriter, req *http.Request) {
+	ctx := appengine.NewContext(req)
+	ctx.Infof(req.FormValue("msg"))
 }
 
 //func handleRankedStats(w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {

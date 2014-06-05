@@ -4,7 +4,6 @@ package LeagueDataCache
 import (
 	"appengine"
 	"appengine/urlfetch"
-	"fmt"
 	lapi "github.com/lologarithm/LeagueFetcher/LeagueApi"
 	"strings"
 	"time"
@@ -44,9 +43,6 @@ var allRankedData map[int64]SummonerRankedData
 
 // RunCache is the primary method. Start this as a goroutine and then use other public methods to fetch from this.
 func RunCache(exit chan bool, get chan Request, put chan Response) {
-	fmt.Printf("Setting up cache.")
-	setupCache()
-	fmt.Printf("Cache started and ready.")
 	for {
 		select {
 		case <-exit:
@@ -77,13 +73,19 @@ func putCache(resp Response) {
 				key := MatchKey{MatchId: match.GameId, SummonerId: matches.SummonerId}
 				// Don't put the match into the list of games for the summoner if it's already cached.
 				if _, ok := allGames[key]; !ok {
+					if _, ok := gamesBySummoner[matches.SummonerId]; !ok {
+						gamesBySummoner[matches.SummonerId] = []lapi.Game{}
+					}
 					gamesBySummoner[matches.SummonerId] = append([]lapi.Game{match}, gamesBySummoner[matches.SummonerId]...)
 				}
 				// Always re-cache here for updated match time.
 				allGames[key] = match
 			}
+		} else {
+			resp.Context.Infof("Cache: Failed to get game, not a game key!")
 		}
 	case "game":
+		// Fix this up later if we ever use it.
 		if key, ok := resp.Key.(MatchKey); ok {
 			if game, ok := resp.Value.(lapi.Game); ok {
 				allGames[key] = game
@@ -112,9 +114,11 @@ func fetchCache(request Request) {
 		}
 	case "champion":
 		if intKey, ok := request.Key.(int64); ok {
-			champ := fetchAndCacheChampion(intKey, api)
-			response.Value = champ
-			response.Ok = true
+			champ, fErr := fetchAndCacheChampion(intKey, api)
+			if fErr == nil {
+				response.Value = champ
+				response.Ok = true
+			}
 		}
 	case "games":
 		if intKey, ok := request.Key.(int64); ok {
@@ -125,20 +129,34 @@ func fetchCache(request Request) {
 					if len(games) < 10 {
 						sliceEnd = len(games)
 					}
-					matchHistory := convertGamesToMatchHistory(intKey, games[0:sliceEnd], fetchAndCacheChampion, api)
-					response.Value = matchHistory
-					response.Ok = true
+					matchHistory, fetchErr := convertGamesToMatchHistory(intKey, games[0:sliceEnd], fetchAndCacheChampion, api)
+					if fetchErr == nil {
+						response.Value = matchHistory
+						response.Ok = true
+					}
 				} else {
-					fmt.Printf("Cached games are old or no games found.")
+					request.Context.Warningf("Cached games are old or no games found.")
 				}
+			} else {
+				request.Context.Warningf("Cache: No games foudn for that id.")
 			}
+		} else {
+			request.Context.Warningf("Cache: Not int key for fetching games.")
 		}
 	case "game":
 		if key, ok := request.Key.(MatchKey); ok {
 			if game, ok := allGames[key]; ok {
-				response.Value = convertGameToMatchDetail(game, api)
-				response.Ok = true
+				gameDetail, fErr := convertGameToMatchDetail(game, api)
+				if fErr == nil {
+					response.Value = gameDetail
+					response.Ok = true
+				}
+			} else {
+				request.Context.Warningf("Cache: Failed to get game, key not in dict: %v", key)
+				request.Context.Warningf("Cache: gamesBySummoner dump:\n%v", gamesBySummoner[key.SummonerId])
 			}
+		} else {
+			request.Context.Warningf("Cache: Failed to get game, not a game key!")
 		}
 	case "team":
 	case "rankedData":
@@ -148,7 +166,7 @@ func fetchCache(request Request) {
 					response.Value = data
 					response.Ok = true
 				} else {
-					fmt.Printf("Cached ranked data is too old.")
+					request.Context.Warningf("Cached ranked data is too old.")
 				}
 			}
 		}
@@ -157,12 +175,18 @@ func fetchCache(request Request) {
 	request.Response <- *response
 }
 
-func setupCache() {
+func SetupCache() {
 	loadChampions(championCache)
 	loadSummoners(summonerCache)
-	allGames = make(map[MatchKey]lapi.Game, 1)
-	gamesBySummoner = make(map[int64][]lapi.Game, 1)
-	allRankedData = make(map[int64]SummonerRankedData, 1)
+	if allGames == nil {
+		allGames = make(map[MatchKey]lapi.Game)
+	}
+	if gamesBySummoner == nil {
+		gamesBySummoner = make(map[int64][]lapi.Game)
+	}
+	if allRankedData == nil {
+		allRankedData = make(map[int64]SummonerRankedData)
+	}
 }
 
 func saveCache() {

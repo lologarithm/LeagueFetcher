@@ -341,3 +341,12 @@ type RawStats struct {
 	WardPlaced                      int
 	Win                             bool //Flag specifying whether or not this game was won.
 }
+
+type ErrorStatus struct {
+	Status StatusMessage
+}
+
+type StatusMessage struct {
+	Message    string
+	StatusCode int64 `json:"status_code"`
+}

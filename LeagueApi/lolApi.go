@@ -3,6 +3,7 @@ package LeagueApi
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -34,6 +35,7 @@ const (
 type RemoteGet func(url string) (*http.Response, error)
 type Logger interface {
 	Infof(string, ...interface{})
+	Warningf(string, ...interface{})
 }
 
 var ApiKey string
@@ -55,88 +57,102 @@ func (lf *LolFetcher) makeStaticDataUrl(version string, method string, params st
 	return url
 }
 
-func (lf *LolFetcher) makeRequest(url string, value interface{}) {
+func (lf *LolFetcher) makeRequest(url string, value interface{}) error {
 	st := time.Now().UnixNano()
 	resp, err := lf.Get(url)
 	if err != nil {
-		lf.Log.Infof("Failed to open conn: %s\n", err.Error())
-		return
+		lf.Log.Warningf("Failed to open conn: %s\n", err.Error())
+		return errors.New("Connection Failed.")
+	}
+
+	if resp.StatusCode != 200 {
+		lf.Log.Warningf("Request (%s) failed with code %d, Status: %s", url, resp.StatusCode, resp.Status)
+		return errors.New(resp.Status)
 	}
 
 	body, bodyErr := ioutil.ReadAll(resp.Body)
 	if bodyErr != nil {
-		lf.Log.Infof("Failed to open conn: %s\n", err.Error())
-		return
+		lf.Log.Warningf("Failed to parse response body.: %s\n", err.Error())
+		return errors.New("Failed to parse response body.")
 	}
 
 	unmarshErr := json.Unmarshal(body, value)
 	if unmarshErr != nil {
-		lf.Log.Infof("Failed to unmarshal json: %s\n", unmarshErr.Error())
+		lf.Log.Warningf("Failed to unmarshal json: %s\n", unmarshErr.Error())
+		lf.Log.Infof("Failed JSON: %s", string(body))
+		var sErr ErrorStatus
+		statsError := json.Unmarshal(body, &sErr)
+		if statsError == nil && sErr.Status.StatusCode == 429 {
+			lf.Log.Warningf("Rate Limit Exceeded on request: %s", url)
+			return errors.New("Rate Limit Exceeded.")
+		}
 	}
+
 	lf.Log.Infof("Request (%s) Took: %.4fms\n", url, (float64(time.Now().UnixNano()-st))/float64(1000000.0))
+	return nil
 }
 
-func (lf *LolFetcher) GetSummonerByName(name string) (summoners map[string]Summoner) {
+func (lf *LolFetcher) GetSummonerByName(name string) (summoners map[string]Summoner, limit error) {
 	name = NormalizeString(name)
-	lf.makeRequest(lf.makeUrl(summonerVersion, "summoner/by-name/"+name), &summoners)
+	limit = lf.makeRequest(lf.makeUrl(summonerVersion, "summoner/by-name/"+name), &summoners)
 	return
 }
 
-func (lf *LolFetcher) GetSummonersById(ids []int64) (summoners map[string]Summoner) {
+func (lf *LolFetcher) GetSummonersById(ids []int64) (summoners map[string]Summoner, limit error) {
 	var buffer bytes.Buffer
 	buffer.WriteString("summoner/")
 	for _, id := range ids {
 		buffer.WriteString(strconv.FormatInt(id, 10))
 		buffer.WriteString(",")
 	}
-	lf.makeRequest(lf.makeUrl(summonerVersion, buffer.String()), &summoners)
+	limit = lf.makeRequest(lf.makeUrl(summonerVersion, buffer.String()), &summoners)
 	return
 }
 
-func (lf *LolFetcher) GetSummonerRankedStats(id int64) (srs RankedStats) {
+func (lf *LolFetcher) GetSummonerRankedStats(id int64) (srs RankedStats, limit error) {
 	method := fmt.Sprintf("stats/by-summoner/%d/ranked", id)
-	lf.makeRequest(lf.makeUrl(statsVersion, method), &srs)
+	limit = lf.makeRequest(lf.makeUrl(statsVersion, method), &srs)
 	return
 }
 
-func (lf *LolFetcher) GetSummonerSummaryStats(id int64) (stats PlayerStatsSummaryList) {
+func (lf *LolFetcher) GetSummonerSummaryStats(id int64) (stats PlayerStatsSummaryList, e error) {
 	method := fmt.Sprintf("stats/by-summoner/%d/summary", id)
-	lf.makeRequest(lf.makeUrl(statsVersion, method), &stats)
+	e = lf.makeRequest(lf.makeUrl(statsVersion, method), &stats)
 	return
 }
 
-func (lf *LolFetcher) GetSummonerLeagues(id int64) (leagues map[string][]League) {
+func (lf *LolFetcher) GetSummonerLeagues(id int64) (leagues map[string][]League, e error) {
 	method := fmt.Sprintf("league/by-summoner/%d/entry", id)
-	lf.makeRequest(lf.makeUrl(leagueVersion, method), &leagues)
+	e = lf.makeRequest(lf.makeUrl(leagueVersion, method), &leagues)
 	return
 }
 
-func (lf *LolFetcher) GetSummonerTeams(id int64, get RemoteGet) (teams map[string][]Team) {
+func (lf *LolFetcher) GetSummonerTeams(id int64, get RemoteGet) (teams map[string][]Team, e error) {
 	method := fmt.Sprintf("team/by-summoner/%d", id)
-	lf.makeRequest(lf.makeUrl(teamVersion, method), &teams)
+	e = lf.makeRequest(lf.makeUrl(teamVersion, method), &teams)
 	return
 }
 
-func (lf *LolFetcher) GetAllChampions() (champs ChampionList) {
+func (lf *LolFetcher) GetAllChampions() (champs ChampionList, e error) {
 	params := "&champData=all"
-	lf.makeRequest(lf.makeStaticDataUrl(champVersion, "champion", params), &champs)
+	e = lf.makeRequest(lf.makeStaticDataUrl(champVersion, "champion", params), &champs)
 	return
 }
 
-func (lf *LolFetcher) GetChampion(id int64) (champ Champion) {
+func (lf *LolFetcher) GetChampion(id int64) (champ Champion, e error) {
 	if id <= 0 {
 		champ.Name = "Total"
 		return
 	}
 	params := "&champData=all"
 	method := fmt.Sprintf("champion/%d", id)
-	lf.makeRequest(lf.makeStaticDataUrl(champVersion, method, params), &champ)
+	e = lf.makeRequest(lf.makeStaticDataUrl(champVersion, method, params), &champ)
 	return
 }
 
-func (lf *LolFetcher) GetRecentMatches(id int64) (r RecentGames) {
+func (lf *LolFetcher) GetRecentMatches(id int64) (r RecentGames, e error) {
 	method := fmt.Sprintf("game/by-summoner/%d/recent", id)
-	lf.makeRequest(lf.makeUrl(gameVersion, method), &r)
+	e = lf.makeRequest(lf.makeUrl(gameVersion, method), &r)
 	return
 }
 

@@ -46,7 +46,7 @@ func fetchSummonersById(ids []int64, api *lapi.LolFetcher) []lapi.Summoner {
 
 	// Now fetch the summoners that we didn't find
 	if len(missingIds) > 0 {
-		fetchedSummoners := api.GetSummonersById(missingIds)
+		fetchedSummoners, _ := api.GetSummonersById(missingIds)
 		for _, value := range fetchedSummoners {
 			allSummonersById[value.Id] = value
 			allSummonersByName[value.Name] = value
@@ -73,6 +73,10 @@ func storeSummoners(file string) {
 }
 
 func loadSummoners(file string) {
+	if allSummonersByName != nil && allSummonersById != nil {
+		return
+	}
+
 	allSummonersByName = make(map[string]lapi.Summoner, 1)
 	allSummonersById = make(map[int64]lapi.Summoner, 1)
 	summonerData, readErr := ioutil.ReadFile(file)

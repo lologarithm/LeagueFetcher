@@ -3,6 +3,7 @@ package LeagueDataCache
 import (
 	"appengine"
 	"appengine/urlfetch"
+	"errors"
 	lapi "github.com/lologarithm/LeagueFetcher/LeagueApi"
 	"net/http"
 	"strconv"
@@ -37,7 +38,10 @@ func GetSummoner(name string, get chan Request, put chan Response, c appengine.C
 		client := getClient(c)
 		api := &lapi.LolFetcher{Get: client.Get, Log: c}
 		// Summoner not cached. Retrieving from LAPI
-		summoners := api.GetSummonerByName(name)
+		summoners, apiErr := api.GetSummonerByName(name)
+		if apiErr != nil {
+			// Need to handle different errors probably.
+		}
 		if s, gotOk := summoners[name]; gotOk {
 			// Cache value before returning.
 			goPut(s, "summoner", put, c)
@@ -57,15 +61,17 @@ func GetSummonerMatchesSimple(id int64, get chan Request, put chan Response, c a
 	if getErr != nil {
 		client := getClient(c)
 		api := &lapi.LolFetcher{Get: client.Get, Log: c}
-		games := api.GetRecentMatches(id)
+		games, fetchErr := api.GetRecentMatches(id)
+		if fetchErr != nil {
+			return MatchHistory{}, fetchErr
+		}
 		if len(games.Games) > 0 {
-
 			goPut(games, "games", put, c)
-			matches := convertGamesToMatchHistory(id, games.Games, func(id int64, api *lapi.LolFetcher) lapi.Champion {
-				champ, _ := GetChampion(id, get, c)
-				return champ
+			matches, fErr := convertGamesToMatchHistory(id, games.Games, func(id int64, api *lapi.LolFetcher) (lapi.Champion, error) {
+				champ, fErr := GetChampion(id, get, c)
+				return champ, fErr
 			}, api)
-			return matches, nil
+			return matches, fErr
 		}
 		return MatchHistory{SummonerId: id}, CacheError{message: "No recent games found for summoner."}
 	}
@@ -89,7 +95,15 @@ func GetMatch(matchId int64, summonerId int64, get chan Request, put chan Respon
 		}
 	}
 	if len(missingIds) > 0 {
-		fetchedSummoners := api.GetSummonersById(missingIds)
+		fetchedSummoners, apiErr := api.GetSummonersById(missingIds)
+		if apiErr != nil {
+			// Try again?
+			fs, apiErr2 := api.GetSummonersById(missingIds)
+			if apiErr2 != nil {
+				return game, apiErr2
+			}
+			fetchedSummoners = fs
+		}
 		for _, value := range fetchedSummoners {
 			// Cache this guy
 			goPut(value, "summoner", put, c)
@@ -108,7 +122,7 @@ func GetMatch(matchId int64, summonerId int64, get chan Request, put chan Respon
 	return game, nil
 }
 
-func GetSummonerRankedData(s lapi.Summoner, get chan Request, put chan Response, c appengine.Context) (srd SummonerRankedData) {
+func GetSummonerRankedData(s lapi.Summoner, get chan Request, put chan Response, c appengine.Context) (srd SummonerRankedData, e error) {
 	// 1. Check for cached data
 	value, getErr := goGet(Request{Type: "rankedData", Key: s.Id, Context: c}, get)
 	client := getClient(c)
@@ -117,7 +131,10 @@ func GetSummonerRankedData(s lapi.Summoner, get chan Request, put chan Response,
 		srd.Summoner = s
 		srd.RankedTeamLeagues = make(map[string]lapi.League)
 		// 1. Get RankedStats
-		stats := api.GetSummonerRankedStats(s.Id)
+		stats, apiErr := api.GetSummonerRankedStats(s.Id)
+		if apiErr != nil {
+			return srd, apiErr
+		}
 		for index, stat := range stats.Champions {
 			cVal, _ := goGet(Request{Type: "champion", Key: stat.Id, Context: c}, get)
 			champ, _ := cVal.(lapi.Champion)
@@ -128,7 +145,10 @@ func GetSummonerRankedData(s lapi.Summoner, get chan Request, put chan Response,
 		// 2. Get Teams... for now we don't do this.
 
 		// 3. Get Leagues
-		leagues := api.GetSummonerLeagues(s.Id)
+		leagues, fetchErr := api.GetSummonerLeagues(s.Id)
+		if fetchErr != nil && fetchErr.Error() == "Rate Limit Exceeded." {
+			return srd, fetchErr
+		}
 		for _, league := range leagues[strconv.FormatInt(s.Id, 10)] {
 			if len(league.Entries) > 1 {
 				// Possible bug state where they don't actually give us the stats.
@@ -144,15 +164,15 @@ func GetSummonerRankedData(s lapi.Summoner, get chan Request, put chan Response,
 		}
 
 		goPut(srd, "rankedData", put, c)
-		return srd
+		return srd, nil
 	}
 
 	if rankData, ok := value.(SummonerRankedData); ok {
-		return rankData
+		return rankData, nil
 	}
 
 	// If all else fails, return an empty object.
-	return srd
+	return srd, errors.New("Failed to get stats.")
 }
 
 // Generic function to request data from cache.

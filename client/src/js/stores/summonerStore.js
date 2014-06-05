@@ -41,6 +41,7 @@ define(['/js/settings.js', '/js/api/summonerAPI.js', '/js/mockServer/mockSummone
 				}, this))
 			}
 
+
 			return rankedData[name] ||  { Id: 0, ProfileIconId: 0, SummonerLevel: 0, RevisionDate: 0, SummonerId: 0, Champions: [],
 											ModifyDate: 0,
 											Solo5sLeague: {

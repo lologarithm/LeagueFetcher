@@ -1,5 +1,6 @@
 *.exe
 *.json
+.DS_STORE
 
 client/node_modules
 client/bower_components

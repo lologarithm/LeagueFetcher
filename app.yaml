@@ -26,6 +26,9 @@ handlers:
 - url: /js
   static_dir: client/build/js
 
+- url: /imgs
+  static_dir: client/src/imgs
+
 - url: /
   static_files: client/src/index.html
   upload: client/src/index.html

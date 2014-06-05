@@ -14,6 +14,10 @@ import (
 
 // Fetch Champion from cache goroutine.
 func GetChampion(id int64, get chan Request, c appengine.Context) (lapi.Champion, error) {
+	if id <= 0 {
+		// Return empty champion if there is no champion.
+		return lapi.Champion{}, nil
+	}
 	result := make(chan Response, 1)
 	cReq := Request{Type: "champion", Key: fmt.Sprintf("%d", id), Response: result, Context: c}
 	get <- cReq
@@ -28,10 +32,11 @@ func GetChampion(id int64, get chan Request, c appengine.Context) (lapi.Champion
 
 // Fetch Summoner from cache goroutine
 func GetSummoner(name string, get chan Request, put chan Response, c appengine.Context) (lapi.Summoner, error) {
+	name = NormalizeString(name)
 	value, getErr := goGet(Request{Type: "summoner", Key: name, Context: c}, get)
-	client := getClient(c)
-	api := &lapi.LolFetcher{Get: client.Get, Log: c.Infof}
 	if getErr != nil {
+		client := getClient(c)
+		api := &lapi.LolFetcher{Get: client.Get, Log: c.Infof}
 		// Summoner not cached. Retrieving from LAPI
 		summoners := api.GetSummonerByName(name)
 		if s, gotOk := summoners[name]; gotOk {
@@ -50,11 +55,12 @@ func GetSummoner(name string, get chan Request, put chan Response, c appengine.C
 // Fetch Summoner recent match history typed version
 func GetSummonerMatchesSimple(id int64, get chan Request, put chan Response, c appengine.Context) (MatchHistory, error) {
 	value, getErr := goGet(Request{Type: "games", Key: fmt.Sprintf("%d", id), Context: c}, get)
-	client := getClient(c)
-	api := &lapi.LolFetcher{Get: client.Get, Log: c.Infof}
 	if getErr != nil {
+		client := getClient(c)
+		api := &lapi.LolFetcher{Get: client.Get, Log: c.Infof}
 		games := api.GetRecentMatches(id)
 		if len(games.Games) > 0 {
+
 			goPut(games, "games", put, c)
 			matches := convertGamesToMatchHistory(id, games.Games, func(id int64, api *lapi.LolFetcher) lapi.Champion {
 				champ, _ := GetChampion(id, get, c)
@@ -110,6 +116,7 @@ func GetSummonerRankedData(s lapi.Summoner, get chan Request, put chan Response,
 	api := &lapi.LolFetcher{Get: client.Get, Log: c.Infof}
 	if getErr != nil {
 		srd.Summoner = s
+		srd.RankedTeamLeagues = make(map[string]lapi.League)
 		// 1. Get RankedStats
 		stats := api.GetSummonerRankedStats(s.Id)
 		for index, stat := range stats.Champions {

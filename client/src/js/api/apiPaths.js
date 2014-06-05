@@ -1,7 +1,7 @@
 define([], function () {
 	return {
 		SUMMONER : {
-			GET_MATCH_HISTORY : '/api/summoner/matchHistory'
+			GET_MATCH_HISTORY : function(name){return '/api/summoner/matchHistory?name=' + name}
 		},
 		CHAMPION : {
 

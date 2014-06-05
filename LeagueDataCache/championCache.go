@@ -42,13 +42,16 @@ func loadChampions(file string) {
 }
 
 func fetchAndCacheChampion(id int64, api *lapi.LolFetcher) lapi.Champion {
-	// TODO: re-fetch champions if there is a new one.
 	if allChampions == nil || len(allChampions) == 0 {
 		champs := api.GetAllChampions()
 		for _, champion := range champs.Data {
 			allChampions[champion.Id] = champion
 		}
 	}
-	champ, _ := allChampions[id]
+	champ, ok := allChampions[id]
+	if !ok {
+		champ = api.GetChampion(id)
+		allChampions[champ.Id] = champ
+	}
 	return champ
 }

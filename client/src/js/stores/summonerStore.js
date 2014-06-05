@@ -1,6 +1,6 @@
 define(['/js/settings.js', '/js/api/summonerAPI.js', '/js/mockServer/mockSummonerAPI.js', '/js/dispatcher.js'], function (settings, realAPI, mockAPI, dispatcher) {
 	var matchHistory = {};
-
+	var changeListeners = [];
 
 	var api = settings.useLocal ? mockAPI : realAPI;
 
@@ -23,10 +23,13 @@ define(['/js/settings.js', '/js/api/summonerAPI.js', '/js/mockServer/mockSummone
 
 		getMatchHistory: function (name) {
 			if(matchHistory[name] === undefined) {
-				matchHistory[name] = api.getMatchHistory(name);
+				api.getMatchHistory(name, $.proxy(function (data) {
+					matchHistory[name] = data;
+					this.notifyListeners();
+				}, this))
 			}
 
-			return matchHistory[name];
+			return matchHistory[name] || { Games: [] };
 		}
 	}
 

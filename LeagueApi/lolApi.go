@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -53,23 +54,24 @@ func (lf *LolFetcher) makeStaticDataUrl(version string, method string, params st
 }
 
 func (lf *LolFetcher) makeRequest(url string, value interface{}) {
-	lf.Log("Fetching: %s\n", url)
+	st := time.Now().UnixNano()
 	resp, err := lf.Get(url)
 	if err != nil {
-		//Ctx.Infof("Failed to open conn: %s\n", err.Error())
+		lf.Log("Failed to open conn: %s\n", err.Error())
 		return
 	}
 
 	body, bodyErr := ioutil.ReadAll(resp.Body)
 	if bodyErr != nil {
-		//Ctx.Infof("Failed to open conn: %s\n", err.Error())
+		lf.Log("Failed to open conn: %s\n", err.Error())
 		return
 	}
 
 	unmarshErr := json.Unmarshal(body, value)
 	if unmarshErr != nil {
-		//Ctx.Infof("Failed to unmarshal json: %s\n", unmarshErr.Error())
+		lf.Log("Failed to unmarshal json: %s\n", unmarshErr.Error())
 	}
+	lf.Log("Request (%s) Took: %.4fms\n", url, (float64(time.Now().UnixNano()-st))/float64(1000000.0))
 }
 
 func (lf *LolFetcher) GetSummonerByName(name string) (summoners map[string]Summoner) {
@@ -116,6 +118,16 @@ func (lf *LolFetcher) GetSummonerTeams(id int64, get RemoteGet) (teams map[strin
 func (lf *LolFetcher) GetAllChampions() (champs ChampionList) {
 	params := "&champData=all"
 	lf.makeRequest(lf.makeStaticDataUrl(champVersion, "champion", params), &champs)
+	return
+}
+
+func (lf *LolFetcher) GetChampion(id int64) (champ Champion) {
+	if id <= 0 {
+		return
+	}
+	params := "&champData=all"
+	method := fmt.Sprintf("champion/%d", id)
+	lf.makeRequest(lf.makeStaticDataUrl(champVersion, method, params), &champ)
 	return
 }
 

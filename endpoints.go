@@ -35,8 +35,7 @@ func loadConfig() {
 type endpointFunc func(http.ResponseWriter, *http.Request, chan lolCache.Request, chan lolCache.Response)
 
 func init() {
-	//loadConfig()
-	lapi.ApiKey = "f0fa5a3c-e718-4004-b264-b9a64fc7a444"
+	loadConfig()
 	cacheGet := make(chan lolCache.Request, 10)
 	cachePut := make(chan lolCache.Response, 10)
 	exit := make(chan bool, 1)
@@ -66,7 +65,6 @@ func init() {
 // Wrapper function to time the endpoint call.
 func timeEndpoint(endFunc endpointFunc, w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {
 	c := appengine.NewContext(r)
-	c.Infof("Hit URL: %s", r.URL)
 	st := time.Now().UnixNano()
 	endFunc(w, r, cacheGet, cachePut)
 	c.Infof("Request (%s) Took: %.4fms\n", r.URL, (float64(time.Now().UnixNano()-st))/float64(1000000.0))
@@ -83,6 +81,7 @@ func handleRecentMatches(w http.ResponseWriter, r *http.Request, cacheGet chan l
 
 	if err != nil {
 		returnEmptyJson(w)
+		c.Infof("Failure To Get Summoner: %s\n", err.Error())
 		return
 	}
 	matches, _ := lolCache.GetSummonerMatchesSimple(summoner.Id, cacheGet, cachePut, c)

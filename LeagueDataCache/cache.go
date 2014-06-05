@@ -66,7 +66,6 @@ func putCache(resp Response) {
 			allSummonersById[summoner.Id] = summoner
 			key := NormalizeString(summoner.Name)
 			allSummonersByName[key] = summoner
-			resp.Context.Infof("SUmm Map: %v\n MY KEY: %v\n", allSummonersByName, summoner.Name)
 		}
 	case "champion":
 		// For now the cache will handle this.

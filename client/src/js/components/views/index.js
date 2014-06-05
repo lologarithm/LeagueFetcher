@@ -9,11 +9,12 @@ define(['jquery', 'react', 'js/components/views/matchHistoryView.js', 'js/compon
 		},
 
 		render: function () {
-			var style = this.state.championName !== '' ? {'width':'500px', 'margin':'50px auto 20px'} : {'width':'500px', 'margin':'200px auto 20px'};
-			//<img src="/imgs/logo.jpg" />
+			var style = this.state.championName !== '' ? {'width':'125px'} : {'width':'275px'};
+			//
 
 			return <div className="flexContainer flexColumn">
-						<div className='flexContainer flexColumn flexNone marginAnimate' style={style}>
+						<div className='flexContainer flexColumn flexNone marginAnimate' style={{'width':'500px', 'margin':'50px auto 20px'}}>
+							<img className="widthAnimate" src="/imgs/logo.png" style={style} />
 							<div className='flexNone margin-bottom-s' style={{"font-size": 25}}>
 								Enter Summoner Name:
 							</div>

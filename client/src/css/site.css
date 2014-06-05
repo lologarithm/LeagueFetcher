@@ -16,6 +16,9 @@ input {
 	transition: margin .25s;
 }
 
+.widthAnimate {
+	transition: width .25s;
+}
 
 
 /* Flex Stuff */

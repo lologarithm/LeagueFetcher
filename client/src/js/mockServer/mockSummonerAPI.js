@@ -1,11 +1,20 @@
-define(['./mockMatchHistoryResponse.js'], function (matchHistory) {
+define(['./mockMatchHistoryResponse.js', './mockRankedDataResponse.js'], function (matchHistory, rankedData) {
 	
 
 	function getMatchHistory(name, callback) {
-		return callback(matchHistory);
+		return setTimeout(function () {
+			callback (matchHistory);
+		}, 250);
+	}
+
+	function getRankedData(name, callback) {
+		return setTimeout(function () {
+			callback (rankedData);
+		}, 250);
 	}
 
 	return { 
-		getMatchHistory: getMatchHistory
+		getMatchHistory: getMatchHistory,
+		getRankedData: getRankedData
 	};
 })

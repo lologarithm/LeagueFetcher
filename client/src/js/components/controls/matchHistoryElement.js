@@ -2,7 +2,7 @@
 define(['jquery', 'react', 'moment', 'js/stores/summonerStore.js'], function ($, React, moment, summonerStore) {
 	var MatchHistoryPanel = React.createClass({
 		render: function () {
-			var kda = (this.props.data.Stats.ChampionsKilled + this.props.data.Stats.Assists) / (this.props.data.Stats.NumDeaths || 1);
+			var kda = Math.round((this.props.data.Stats.ChampionsKilled + this.props.data.Stats.Assists) / (this.props.data.Stats.NumDeaths || 1) * 100) / 100;
 			var elmStyle = this.props.data.Stats.Win ? {'border-top':'2px solid green'} : {'border-top':'2px solid red'};
 
 			return <div className='matchHistoryElement padding-m margin-bottom-m' style={elmStyle} >

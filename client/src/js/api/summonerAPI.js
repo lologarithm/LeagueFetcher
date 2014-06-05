@@ -6,8 +6,15 @@ define(['jquery', './apiPaths.js'], function ($, apiPaths) {
 		});
 	}
 
+	function getRankedData (name, callback) {
+		$.get(apiPaths.SUMMONER.GET_RANKED_DATA(name), function (data) {
+			callback (JSON.parse(data));
+		});
+	}
+
 	return {
-		getMatchHistory: getMatchHistory
+		getMatchHistory: getMatchHistory,
+		getRankedData: getRankedData
 	}
 	
 });

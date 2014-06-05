@@ -12,6 +12,9 @@ input {
 	padding:5px;
 }
 
+.marginAnimate {
+	transition: margin .25s;
+}
 
 
 

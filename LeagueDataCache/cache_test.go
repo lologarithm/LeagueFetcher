@@ -108,6 +108,17 @@ func TestExternalGetMatch(t *testing.T) {
 	}
 }
 
+func TestCacheExpire(t *testing.T) {
+	//1. Setup 2 games with expire dates in the past
+	//2. Make sure that it counts as expired.
+
+	// 3. Setup 11 games and make sure the last one expires in the future.
+	// 4. Make sure it counts as not expired
+
+	// 5. Setup 11 games with last one expires in the past
+	// 6. Make sure it counts as expired.
+}
+
 type MockPersist struct {
 }
 

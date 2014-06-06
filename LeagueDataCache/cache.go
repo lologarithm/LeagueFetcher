@@ -149,7 +149,8 @@ func wrappedFetch(request Request, api *lapi.LolFetcher) {
 		if intKey, ok := request.Key.(int64); ok {
 			// If last fetch of game history is old, refetch game history.
 			if games, ok := gamesBySummoner[intKey]; ok {
-				if len(games) > 0 && games[0].ExpireTime > time.Now().Unix() {
+				checkExpireMatch := allGames[MatchKey{SummonerId: intKey, MatchId: games[0].GameId}]
+				if len(games) > 0 && checkExpireMatch.ExpireTime > time.Now().Unix() {
 					sliceEnd := 10
 					if len(games) < 10 {
 						sliceEnd = len(games)

@@ -164,6 +164,7 @@ func returnErrJson(e error, w http.ResponseWriter) {
 }
 
 func writeJson(w http.ResponseWriter, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
 	dataJson, jsonErr := json.Marshal(data)
 	if jsonErr != nil {
 		returnEmptyJson(w)

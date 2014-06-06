@@ -85,61 +85,61 @@ type ChampionInfo struct {
 }
 
 type AggregatedStats struct {
-	AverageAssists              int
-	AverageChampionsKilled      int
-	AverageCombatPlayerScore    int
-	AverageNodeCapture          int
-	AverageNodeCaptureAssist    int
-	AverageNodeNeutralize       int
-	AverageNodeNeutralizeAssist int
-	AverageNumDeaths            int
-	AverageObjectivePlayerScore int
-	AverageTeamObjective        int
-	AverageTotalPlayerScore     int
-	BotGamesPlayed              int
-	KillingSpree                int
-	MaxAssists                  int
-	MaxChampionsKilled          int
-	MaxCombatPlayerScore        int
-	MaxLargestCriticalStrike    int
-	MaxLargestKillingSpree      int
-	MaxNodeCapture              int
-	MaxNodeCaptureAssist        int
-	MaxNodeNeutralize           int
-	MaxNodeNeutralizeAssist     int
-	MaxObjectivePlayerScore     int
-	MaxTeamObjective            int
-	MaxTimePlayed               int
-	MaxTimeSpentLiving          int
-	MaxTotalPlayerScore         int
-	MostChampionKillsPerSession int
-	MostSpellsCast              int
-	NormalGamesPlayed           int
-	RankedPremadeGamesPlayed    int
-	RankedSoloGamesPlayed       int
-	TotalAssists                int
-	TotalChampionKills          int
-	TotalDamageDealt            int
-	TotalDamageTaken            int
-	TotalDeathsPerSession       int
-	TotalDoubleKills            int
-	TotalFirstBlood             int
-	TotalGoldEarned             int
-	TotalHeal                   int
-	TotalMagicDamageDealt       int
-	TotalMinionKills            int
-	TotalNeutralMinionsKilled   int
-	TotalNodeCapture            int
-	TotalNodeNeutralize         int
-	TotalPentaKills             int
-	TotalPhysicalDamageDealt    int
-	TotalQuadraKills            int
-	TotalSessionsLost           int
-	TotalSessionsPlayed         int
-	TotalSessionsWon            int
-	TotalTripleKills            int
-	TotalTurretsKilled          int
-	TotalUnrealKills            int
+	AverageAssists              int `json:",omitempty"`
+	AverageChampionsKilled      int `json:",omitempty"`
+	AverageCombatPlayerScore    int `json:",omitempty"`
+	AverageNodeCapture          int `json:",omitempty"`
+	AverageNodeCaptureAssist    int `json:",omitempty"`
+	AverageNodeNeutralize       int `json:",omitempty"`
+	AverageNodeNeutralizeAssist int `json:",omitempty"`
+	AverageNumDeaths            int `json:",omitempty"`
+	AverageObjectivePlayerScore int `json:",omitempty"`
+	AverageTeamObjective        int `json:",omitempty"`
+	AverageTotalPlayerScore     int `json:",omitempty"`
+	BotGamesPlayed              int `json:",omitempty"`
+	KillingSpree                int `json:",omitempty"`
+	MaxAssists                  int `json:",omitempty"`
+	MaxChampionsKilled          int `json:",omitempty"`
+	MaxCombatPlayerScore        int `json:",omitempty"`
+	MaxLargestCriticalStrike    int `json:",omitempty"`
+	MaxLargestKillingSpree      int `json:",omitempty"`
+	MaxNodeCapture              int `json:",omitempty"`
+	MaxNodeCaptureAssist        int `json:",omitempty"`
+	MaxNodeNeutralize           int `json:",omitempty"`
+	MaxNodeNeutralizeAssist     int `json:",omitempty"`
+	MaxObjectivePlayerScore     int `json:",omitempty"`
+	MaxTeamObjective            int `json:",omitempty"`
+	MaxTimePlayed               int `json:",omitempty"`
+	MaxTimeSpentLiving          int `json:",omitempty"`
+	MaxTotalPlayerScore         int `json:",omitempty"`
+	MostChampionKillsPerSession int `json:",omitempty"`
+	MostSpellsCast              int `json:",omitempty"`
+	NormalGamesPlayed           int `json:",omitempty"`
+	RankedPremadeGamesPlayed    int `json:",omitempty"`
+	RankedSoloGamesPlayed       int `json:",omitempty"`
+	TotalAssists                int `json:",omitempty"`
+	TotalChampionKills          int `json:",omitempty"`
+	TotalDamageDealt            int `json:",omitempty"`
+	TotalDamageTaken            int `json:",omitempty"`
+	TotalDeathsPerSession       int `json:",omitempty"`
+	TotalDoubleKills            int `json:",omitempty"`
+	TotalFirstBlood             int `json:",omitempty"`
+	TotalGoldEarned             int `json:",omitempty"`
+	TotalHeal                   int `json:",omitempty"`
+	TotalMagicDamageDealt       int `json:",omitempty"`
+	TotalMinionKills            int `json:",omitempty"`
+	TotalNeutralMinionsKilled   int `json:",omitempty"`
+	TotalNodeCapture            int `json:",omitempty"`
+	TotalNodeNeutralize         int `json:",omitempty"`
+	TotalPentaKills             int `json:",omitempty"`
+	TotalPhysicalDamageDealt    int `json:",omitempty"`
+	TotalQuadraKills            int `json:",omitempty"`
+	TotalSessionsLost           int `json:",omitempty"`
+	TotalSessionsPlayed         int `json:",omitempty"`
+	TotalSessionsWon            int `json:",omitempty"`
+	TotalTripleKills            int `json:",omitempty"`
+	TotalTurretsKilled          int `json:",omitempty"`
+	TotalUnrealKills            int `json:",omitempty"`
 }
 
 type League struct {
@@ -264,82 +264,82 @@ type Player struct {
 }
 
 type RawStats struct {
-	Assists                         int
-	BarracksKilled                  int // Number of enemy inhibitors killed.
-	ChampionsKilled                 int
-	CombatPlayerScore               int
-	ConsumablesPurchased            int
-	DamageDealtPlayer               int
-	DoubleKills                     int
-	FirstBlood                      int
-	Gold                            int
-	GoldEarned                      int
-	GoldSpent                       int
-	Item0                           int
-	Item1                           int
-	Item2                           int
-	Item3                           int
-	Item4                           int
-	Item5                           int
-	Item6                           int
-	ItemsPurchased                  int
-	KillingSprees                   int
-	LargestCriticalStrike           int
-	LargestKillingSpree             int
-	LargestMultiKill                int
-	LegendaryItemsCreated           int // Number of tier 3 items built.
-	Level                           int
-	MagicDamageDealtPlayer          int
-	MagicDamageDealtToChampions     int
-	MagicDamageTaken                int
-	MinionsDenied                   int
-	MinionsKilled                   int
-	NeutralMinionsKilled            int
-	NeutralMinionsKilledEnemyJungle int
-	NeutralMinionsKilledYourJungle  int
-	NexusKilled                     bool // Flag specifying if the summoner got the killing blow on the nexus.
-	NodeCapture                     int
-	NodeCaptureAssist               int
-	NodeNeutralize                  int
-	NodeNeutralizeAssist            int
-	NumDeaths                       int
-	NumItemsBought                  int
-	ObjectivePlayerScore            int
-	PentaKills                      int
-	PhysicalDamageDealtPlayer       int
-	PhysicalDamageDealtToChampions  int
-	PhysicalDamageTaken             int
-	QuadraKills                     int
-	SightWardsBought                int
-	Spell1Cast                      int // Number of times first champion spell was cast.
-	Spell2Cast                      int // Number of times second champion spell was cast.
-	Spell3Cast                      int // Number of times third champion spell was cast.
-	Spell4Cast                      int // Number of times fourth champion spell was cast.
-	SummonSpell1Cast                int
-	SummonSpell2Cast                int
-	SuperMonsterKilled              int
-	Team                            int
-	TeamObjective                   int
-	TimePlayed                      int
-	TotalDamageDealt                int
-	TotalDamageDealtToChampions     int
-	TotalDamageTaken                int
-	TotalHeal                       int
-	TotalPlayerScore                int
-	TotalScoreRank                  int
-	TotalTimeCrowdControlDealt      int
-	TotalUnitsHealed                int
-	TripleKills                     int
-	TrueDamageDealtPlayer           int
-	TrueDamageDealtToChampions      int
-	TrueDamageTaken                 int
-	TurretsKilled                   int
-	UnrealKills                     int
-	VictoryPointTotal               int
-	VisionWardsBought               int
-	WardKilled                      int
-	WardPlaced                      int
-	Win                             bool //Flag specifying whether or not this game was won.
+	Assists                         int  `json:",omitempty"`
+	BarracksKilled                  int  `json:",omitempty"` // Number of enemy inhibitors killed.`json:",omitempty"`
+	ChampionsKilled                 int  `json:",omitempty"`
+	CombatPlayerScore               int  `json:",omitempty"`
+	ConsumablesPurchased            int  `json:",omitempty"`
+	DamageDealtPlayer               int  `json:",omitempty"`
+	DoubleKills                     int  `json:",omitempty"`
+	FirstBlood                      int  `json:",omitempty"`
+	Gold                            int  `json:",omitempty"`
+	GoldEarned                      int  `json:",omitempty"`
+	GoldSpent                       int  `json:",omitempty"`
+	Item0                           int  `json:",omitempty"`
+	Item1                           int  `json:",omitempty"`
+	Item2                           int  `json:",omitempty"`
+	Item3                           int  `json:",omitempty"`
+	Item4                           int  `json:",omitempty"`
+	Item5                           int  `json:",omitempty"`
+	Item6                           int  `json:",omitempty"`
+	ItemsPurchased                  int  `json:",omitempty"`
+	KillingSprees                   int  `json:",omitempty"`
+	LargestCriticalStrike           int  `json:",omitempty"`
+	LargestKillingSpree             int  `json:",omitempty"`
+	LargestMultiKill                int  `json:",omitempty"`
+	LegendaryItemsCreated           int  `json:",omitempty"` // Number of tier 3 items built.`json:",omitempty"`
+	Level                           int  `json:",omitempty"`
+	MagicDamageDealtPlayer          int  `json:",omitempty"`
+	MagicDamageDealtToChampions     int  `json:",omitempty"`
+	MagicDamageTaken                int  `json:",omitempty"`
+	MinionsDenied                   int  `json:",omitempty"`
+	MinionsKilled                   int  `json:",omitempty"`
+	NeutralMinionsKilled            int  `json:",omitempty"`
+	NeutralMinionsKilledEnemyJungle int  `json:",omitempty"`
+	NeutralMinionsKilledYourJungle  int  `json:",omitempty"`
+	NexusKilled                     bool `json:",omitempty"` // Flag specifying if the summoner got the killing blow on the nexus.`json:",omitempty"`
+	NodeCapture                     int  `json:",omitempty"`
+	NodeCaptureAssist               int  `json:",omitempty"`
+	NodeNeutralize                  int  `json:",omitempty"`
+	NodeNeutralizeAssist            int  `json:",omitempty"`
+	NumDeaths                       int  `json:",omitempty"`
+	NumItemsBought                  int  `json:",omitempty"`
+	ObjectivePlayerScore            int  `json:",omitempty"`
+	PentaKills                      int  `json:",omitempty"`
+	PhysicalDamageDealtPlayer       int  `json:",omitempty"`
+	PhysicalDamageDealtToChampions  int  `json:",omitempty"`
+	PhysicalDamageTaken             int  `json:",omitempty"`
+	QuadraKills                     int  `json:",omitempty"`
+	SightWardsBought                int  `json:",omitempty"`
+	Spell1Cast                      int  `json:",omitempty"` // Number of times first champion spell was cast.`json:",omitempty"`
+	Spell2Cast                      int  `json:",omitempty"` // Number of times second champion spell was cast.`json:",omitempty"`
+	Spell3Cast                      int  `json:",omitempty"` // Number of times third champion spell was cast.`json:",omitempty"`
+	Spell4Cast                      int  `json:",omitempty"` // Number of times fourth champion spell was cast.`json:",omitempty"`
+	SummonSpell1Cast                int  `json:",omitempty"`
+	SummonSpell2Cast                int  `json:",omitempty"`
+	SuperMonsterKilled              int  `json:",omitempty"`
+	Team                            int  `json:",omitempty"`
+	TeamObjective                   int  `json:",omitempty"`
+	TimePlayed                      int  `json:",omitempty"`
+	TotalDamageDealt                int  `json:",omitempty"`
+	TotalDamageDealtToChampions     int  `json:",omitempty"`
+	TotalDamageTaken                int  `json:",omitempty"`
+	TotalHeal                       int  `json:",omitempty"`
+	TotalPlayerScore                int  `json:",omitempty"`
+	TotalScoreRank                  int  `json:",omitempty"`
+	TotalTimeCrowdControlDealt      int  `json:",omitempty"`
+	TotalUnitsHealed                int  `json:",omitempty"`
+	TripleKills                     int  `json:",omitempty"`
+	TrueDamageDealtPlayer           int  `json:",omitempty"`
+	TrueDamageDealtToChampions      int  `json:",omitempty"`
+	TrueDamageTaken                 int  `json:",omitempty"`
+	TurretsKilled                   int  `json:",omitempty"`
+	UnrealKills                     int  `json:",omitempty"`
+	VictoryPointTotal               int  `json:",omitempty"`
+	VisionWardsBought               int  `json:",omitempty"`
+	WardKilled                      int  `json:",omitempty"`
+	WardPlaced                      int  `json:",omitempty"`
+	Win                             bool `json:",omitempty"` //Flag specifying whether or not this game was won.
 }
 
 type ErrorStatus struct {

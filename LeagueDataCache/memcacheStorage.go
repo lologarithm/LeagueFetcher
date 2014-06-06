@@ -12,7 +12,9 @@ type MemcachePersistance struct {
 }
 
 type cachedObject struct {
-	Data []byte
+	Data       []byte
+	IntIndex   int64 // Matches this is the summoner id, Summoners this is id
+	CachedDate int64 // Lets you check within a certain date.
 }
 
 func (mp *MemcachePersistance) PutSummoner(s lapi.Summoner) error {

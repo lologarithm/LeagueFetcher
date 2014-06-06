@@ -2,6 +2,7 @@ package LeagueDataCache
 
 import (
 	"appengine/aetest"
+	"errors"
 	lapi "github.com/lologarithm/LeagueFetcher/LeagueApi"
 	"testing"
 )
@@ -105,16 +106,15 @@ func TestExternalGetMatch(t *testing.T) {
 		t.Log("Found match that doesn't exist.")
 		t.FailNow()
 	}
-
 }
 
 type MockPersist struct {
 }
 
 func (mp *MockPersist) PutObject(objType string, id string, thing interface{}) error {
-	return nil
+	return errors.New("Failed to get!")
 }
 
 func (mp *MockPersist) GetObject(objType string, id string, thing interface{}) error {
-	return nil
+	return errors.New("Failed to get!")
 }

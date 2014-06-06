@@ -109,7 +109,7 @@ func GetMatch(matchId int64, summonerId int64, get chan Request, put chan Respon
 
 		for _, value := range fetchedSummoners {
 			// Cache this guy
-			goPut(value, "summoner", put, c, persist)
+			go goPut(value, "summoner", put, c, persist)
 			// Put this summoner name where it belongs.
 			// This is inefficient but there is never more than 10 players.. so meh.
 			for i := 0; i < len(game.FellowPlayers); i++ {
@@ -133,40 +133,61 @@ func GetSummonerRankedData(s lapi.Summoner, get chan Request, put chan Response,
 	if getErr != nil {
 		srd.Summoner = s
 		srd.RankedTeamLeagues = make(map[string]lapi.League)
-		// 1. Get RankedStats
-		stats, apiErr := api.GetSummonerRankedStats(s.Id)
-		if apiErr != nil {
-			return srd, apiErr
-		}
-		for index, stat := range stats.Champions {
-			cVal, _ := goGet(Request{Type: "champion", Key: stat.Id, Context: c}, get)
-			champ, _ := cVal.(lapi.Champion)
-			stat.ChampionName = champ.Name
-			stats.Champions[index] = stat
-		}
-		srd.RankedStats = stats
-		// 2. Get Teams... for now we don't do this.
 
-		// 3. Get Leagues
-		leagues, fetchErr := api.GetSummonerLeagues(s.Id)
-		if fetchErr != nil && fetchErr.Error() == "Rate Limit Exceeded." {
-			return srd, fetchErr
-		}
-		for _, league := range leagues[strconv.FormatInt(s.Id, 10)] {
-			if len(league.Entries) > 1 {
-				// Possible bug state where they don't actually give us the stats.
-				continue
+		// Async get stats & leagues together.
+		getStats := make(chan lapi.ApiAsyncResponse)
+		getLeagues := make(chan lapi.ApiAsyncResponse)
+		go api.GetSummonerRankedStatsAsync(s.Id, getStats)
+		go api.GetSummonerLeaguesAsync(s.Id, getLeagues)
+		responses := 0
+		for {
+			select {
+			case statsAsync := <-getStats:
+				if statsAsync.Error != nil {
+					return srd, statsAsync.Error
+				}
+				if stats, ok := statsAsync.Value.(lapi.RankedStats); ok {
+					for index, stat := range stats.Champions {
+						cVal, _ := goGet(Request{Type: "champion", Key: stat.Id, Context: c}, get)
+						champ, _ := cVal.(lapi.Champion)
+						stat.ChampionName = champ.Name
+						stats.Champions[index] = stat
+					}
+					srd.RankedStats = stats
+				}
+				// If we have both pieeces, return!
+				if responses == 1 {
+					goPut(srd, "rankedData", put, c, nil)
+					return srd, nil
+				}
+				responses += 1
+			case leaguesAsync := <-getLeagues:
+				if leaguesAsync.Error != nil && leaguesAsync.Error.Error() == "Rate Limit Exceeded." {
+					return srd, leaguesAsync.Error
+				}
+				if leagues, ok := leaguesAsync.Value.(map[string][]lapi.League); ok {
+					for _, league := range leagues[strconv.FormatInt(s.Id, 10)] {
+						if len(league.Entries) > 1 {
+							// Possible bug state where they don't actually give us the stats.
+							continue
+						}
+						if league.Queue == "RANKED_SOLO_5x5" {
+							srd.Solo5sLeague = league
+						} else if league.Queue == "RANKED_SOLO_3x3" {
+							srd.Solo3sLeague = league
+						} else if strings.Contains(league.Queue, "RANKED") {
+							srd.RankedTeamLeagues[league.Entries[0].PlayerOrTeamId] = league
+						}
+					}
+				}
+				// If we have both pieeces, return!
+				if responses == 1 {
+					goPut(srd, "rankedData", put, c, nil)
+					return srd, nil
+				}
+				responses += 1
 			}
-			if league.Queue == "RANKED_SOLO_5x5" {
-				srd.Solo5sLeague = league
-			} else if league.Queue == "RANKED_SOLO_3x3" {
-				srd.Solo3sLeague = league
-			} else if strings.Contains(league.Queue, "RANKED") {
-				srd.RankedTeamLeagues[league.Entries[0].PlayerOrTeamId] = league
-			}
 		}
-
-		goPut(srd, "rankedData", put, c, nil)
 		return srd, nil
 	}
 

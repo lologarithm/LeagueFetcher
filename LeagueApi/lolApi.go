@@ -45,6 +45,11 @@ type LolFetcher struct {
 	Log Logger
 }
 
+type ApiAsyncResponse struct {
+	Value interface{}
+	Error error
+}
+
 func (lf *LolFetcher) makeUrl(version string, method string) string {
 	url := fmt.Sprintf("%s/%s/%s/%s?api_key=%s", baseUrl, region, version, method, ApiKey)
 	//lf.Log("URL: %s\n", url)
@@ -115,6 +120,14 @@ func (lf *LolFetcher) GetSummonerRankedStats(id int64) (srs RankedStats, limit e
 	return
 }
 
+func (lf *LolFetcher) GetSummonerRankedStatsAsync(id int64, resp chan ApiAsyncResponse) {
+	var srs RankedStats
+	method := fmt.Sprintf("stats/by-summoner/%d/ranked", id)
+	limit := lf.makeRequest(lf.makeUrl(statsVersion, method), &srs)
+	val := ApiAsyncResponse{Value: srs, Error: limit}
+	resp <- val
+}
+
 func (lf *LolFetcher) GetSummonerSummaryStats(id int64) (stats PlayerStatsSummaryList, e error) {
 	method := fmt.Sprintf("stats/by-summoner/%d/summary", id)
 	e = lf.makeRequest(lf.makeUrl(statsVersion, method), &stats)
@@ -125,6 +138,14 @@ func (lf *LolFetcher) GetSummonerLeagues(id int64) (leagues map[string][]League,
 	method := fmt.Sprintf("league/by-summoner/%d/entry", id)
 	e = lf.makeRequest(lf.makeUrl(leagueVersion, method), &leagues)
 	return
+}
+
+func (lf *LolFetcher) GetSummonerLeaguesAsync(id int64, resp chan ApiAsyncResponse) {
+	var leagues map[string][]League
+	method := fmt.Sprintf("league/by-summoner/%d/entry", id)
+	e := lf.makeRequest(lf.makeUrl(leagueVersion, method), &leagues)
+	val := ApiAsyncResponse{Value: leagues, Error: e}
+	resp <- val
 }
 
 func (lf *LolFetcher) GetSummonerTeams(id int64, get RemoteGet) (teams map[string][]Team, e error) {

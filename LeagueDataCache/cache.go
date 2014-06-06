@@ -92,7 +92,7 @@ func putCache(resp Response) {
 				}
 				// Always re-cache here for updated match time.
 				allGames[key] = match
-				resp.Persist.PutObject("Match", key.String(), match)
+				go resp.Persist.PutObject("Match", key.String(), match)
 			}
 		} else {
 			resp.Context.Infof("Cache: Failed to get game, not a game key!")

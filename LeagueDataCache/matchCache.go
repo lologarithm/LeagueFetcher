@@ -48,6 +48,7 @@ func convertGameToMatchDetail(g lapi.Game, request Request, api *lapi.LolFetcher
 	}
 
 	if len(missingIds) > 0 {
+		request.Context.Infof("Trying to get from %d summoner names from datastore.", len(missingIds))
 		missingS, err := request.Persist.GetSummoners(missingIds)
 
 		if err == nil {
@@ -56,18 +57,19 @@ func convertGameToMatchDetail(g lapi.Game, request Request, api *lapi.LolFetcher
 					if data.Id == p.SummonerId {
 						p.SummonerName = data.Name
 						lmd.FellowPlayers[ind] = p
+						cacheSummoner(data)
 						break
 					}
 				}
 			}
 		} else if me, ok := err.(appengine.MultiError); ok {
-			// Only found *some* of the summoners. Get the ones we can.
 			for i, merr := range me {
 				if merr == nil {
 					for ind, p := range lmd.FellowPlayers {
 						if missingIds[i] == p.SummonerId {
 							p.SummonerName = missingS[i].Name
 							lmd.FellowPlayers[ind] = p
+							cacheSummoner(missingS[i])
 							break
 						}
 					}

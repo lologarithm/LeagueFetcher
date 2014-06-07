@@ -76,7 +76,6 @@ func putCache(resp Response) {
 	case "summoner":
 		if summoner, ok := resp.Value.(lapi.Summoner); ok {
 			cacheSummoner(summoner)
-			//resp.Persist.PutObject("Summoner", key, summoner)
 			resp.Persist.PutSummoner(summoner)
 		}
 	case "champion":

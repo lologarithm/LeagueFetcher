@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Public Functions that use channel to communicate with cache goroutine
@@ -99,6 +100,7 @@ func GetMatch(matchId int64, summonerId int64, get chan Request, put chan Respon
 	if len(missingIds) > 0 {
 		fetchedSummoners, apiErr := api.GetSummonersById(missingIds)
 		if apiErr != nil {
+			c.Infof("Failed to get summoners: %s", apiErr.Error())
 			return game, apiErr
 		}
 
@@ -116,6 +118,7 @@ func GetMatch(matchId int64, summonerId int64, get chan Request, put chan Respon
 				}
 			}
 		}
+		time.Sleep(time.Millisecond * 10)
 	}
 	return game, nil
 }

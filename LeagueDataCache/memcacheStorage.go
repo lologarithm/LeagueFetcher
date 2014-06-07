@@ -22,6 +22,7 @@ func (mp *MemcachePersistance) PutSummoner(s lapi.Summoner) error {
 	key := datastore.NewKey(mp.Context, "TSummoner", "", s.Id, nil)
 	_, err := datastore.Put(mp.Context, key, &s)
 	if err != nil {
+		mp.Context.Infof("Failed Storing Summoner: %s", err.Error())
 		return err
 	}
 	return nil

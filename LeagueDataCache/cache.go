@@ -19,6 +19,7 @@ type PersistanceProvider interface {
 	PutSummoner(lapi.Summoner) error
 	GetSummoner(*lapi.Summoner) error
 	GetSummonerByName(*lapi.Summoner) error
+	GetSummoners([]int64) ([]lapi.Summoner, error)
 	//PutMatch(lapi.Game)
 	PutObject(string, string, interface{}) error
 	GetObject(string, string, interface{}) error
@@ -176,7 +177,7 @@ func wrappedFetch(request Request, api *lapi.LolFetcher) {
 	case "game":
 		if key, ok := request.Key.(MatchKey); ok {
 			if game, ok := allGames[key]; ok {
-				gameDetail, fErr := convertGameToMatchDetail(game, api)
+				gameDetail, fErr := convertGameToMatchDetail(game, request, api)
 				if fErr == nil {
 					response.Value = gameDetail
 					response.Ok = true
@@ -187,7 +188,7 @@ func wrappedFetch(request Request, api *lapi.LolFetcher) {
 				if persistErr != nil {
 					request.Context.Warningf("Cache: Failed to get game: %v", key)
 				} else {
-					gameDetail, fErr := convertGameToMatchDetail(*persistGame, api)
+					gameDetail, fErr := convertGameToMatchDetail(*persistGame, request, api)
 					if fErr == nil {
 						response.Value = gameDetail
 						response.Ok = true

@@ -19,8 +19,7 @@ type cachedObject struct {
 }
 
 func (mp *MemcachePersistance) PutSummoner(s lapi.Summoner) error {
-	mp.Context.Infof("PERSISTING IN DATASTORE")
-	key := datastore.NewKey(mp.Context, "Summoner", "", s.Id, nil)
+	key := datastore.NewKey(mp.Context, "TSummoner", "", s.Id, nil)
 	_, err := datastore.Put(mp.Context, key, &s)
 	if err != nil {
 		return err
@@ -29,7 +28,7 @@ func (mp *MemcachePersistance) PutSummoner(s lapi.Summoner) error {
 }
 
 func (mp *MemcachePersistance) GetSummoner(s *lapi.Summoner) error {
-	key := datastore.NewKey(mp.Context, "Summoner", "", s.Id, nil)
+	key := datastore.NewKey(mp.Context, "TSummoner", "", s.Id, nil)
 	ferr := datastore.Get(mp.Context, key, s)
 	if ferr != nil {
 		return ferr
@@ -37,12 +36,12 @@ func (mp *MemcachePersistance) GetSummoner(s *lapi.Summoner) error {
 	return nil
 }
 
-func (mp *MemcachePersistance) GetSummoners(ids []int64) ([]*lapi.Summoner, error) {
+func (mp *MemcachePersistance) GetSummoners(ids []int64) ([]lapi.Summoner, error) {
 	keys := make([]*datastore.Key, len(ids))
 	for index, id := range ids {
-		keys[index] = datastore.NewKey(mp.Context, "Summoner", "", id, nil)
+		keys[index] = datastore.NewKey(mp.Context, "TSummoner", "", id, nil)
 	}
-	var entities = make([]*lapi.Summoner, 3)
+	entities := make([]lapi.Summoner, len(keys))
 	err := datastore.GetMulti(mp.Context, keys, entities)
 	return entities, err
 }

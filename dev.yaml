@@ -1,13 +1,9 @@
 application: leaguefetcher
 module: default
 instance_class: F1
-version: live
+version: dev
 runtime: go
 api_version: go1
-
-automatic_scaling:
-  min_idle_instances: 1
-  max_concurrent_requests: 200
 
 handlers:
 - url: /favicon\.ico

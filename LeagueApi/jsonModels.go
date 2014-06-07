@@ -33,46 +33,45 @@ type Champion struct {
 	Id    int64
 	Title string
 
-	Allytips  []string
-	Blurb     string
-	Enemytips []string
-	//image	ImageDto
-	//info	InfoDto
-	Key     string
-	Lore    string
-	Name    string
-	Partype string
-	//passive	PassiveDto
-	//recommended	List[RecommendedDto]
-	//skins	List[SkinDto]
-	Spells []ChampionSpell
-	//stats	StatsDto
-	Tags []string
+	Allytips    []string
+	Blurb       string
+	Enemytips   []string
+	Image       Image
+	Info        Info
+	Key         string
+	Lore        string
+	Name        string
+	Partype     string
+	Passive     Passive
+	Recommended []Recommended
+	Skins       []Skin
+	Spells      []ChampionSpell
+	Stats       Stats
+	Tags        []string
 }
 
 type ChampionSpell struct {
-	Key  string
-	Name string
-
-	//altimages	List[ImageDto]
-	Cooldown     []float64
-	CooldownBurn string
-	Cost         []int
-	CostBurn     string
-	CostType     string
-	Description  string
-	//effect	List[object]	This field is a List of List of Integer.
-	EffectBurn []string
-	//image	ImageDto
-	//leveltip	LevelTipDto
-	Maxrank int
-	//range	object	This field is either a List of Integer or the String 'self' for spells that target one's own champion.
+	Key                  string
+	Name                 string
+	Altimages            []Image
+	Cooldown             []float64
+	CooldownBurn         string
+	Cost                 []int
+	CostBurn             string
+	CostType             string
+	Description          string
+	Effect               [][]int
+	EffectBurn           []string
+	Image                Image
+	Leveltip             LevelTip
+	Maxrank              int
+	Range                interface{} //	This field is either a List of Integer or the String 'self' for spells that target one's own champion.
 	RangeBurn            string
 	Resource             string
 	SanitizedDescription string
 	SanitizedTooltip     string
 	Tooltip              string
-	//vars	List[SpellVarsDto]
+	Vars                 []SpellVars
 }
 
 type ChampionInfo struct {
@@ -342,6 +341,224 @@ type RawStats struct {
 	Win                             bool `json:",omitempty"` //Flag specifying whether or not this game was won.
 }
 
+type Image struct {
+	Full   string
+	Group  string
+	H      int
+	Sprite string
+	W      int
+	X      int
+	Y      int
+}
+
+type Info struct {
+	Attack     int
+	Defense    int
+	Difficulty int
+	Magic      int
+}
+
+type Passive struct {
+	Description          string
+	Image                Image
+	Name                 string
+	SanitizedDescription string
+}
+
+type Recommended struct {
+	Blocks   []Block
+	Champion string
+	Map      string
+	Mode     string
+	Priority bool
+	Title    string
+	Type     string
+}
+
+type Stats struct {
+	Armor                float64
+	Armorperlevel        float64
+	Attackdamage         float64
+	Attackdamageperlevel float64
+	Attackrange          float64
+	Attackspeedoffset    float64
+	Attackspeedperlevel  float64
+	Crit                 float64
+	Critperlevel         float64
+	Hp                   float64
+	Hpperlevel           float64
+	Hpregen              float64
+	Hpregenperlevel      float64
+	Movespeed            float64
+	Mp                   float64
+	Mpperlevel           float64
+	Mpregen              float64
+	Mpregenperlevel      float64
+	Spellblock           float64
+	Spellblockperlevel   float64
+}
+
+type Block struct {
+	Items   []BlockItem
+	RecMath bool
+	Type    string
+}
+
+type BlockItem struct {
+	Count int
+	Id    int
+}
+
+type Skin struct {
+	Id   int
+	Name string
+	Num  int
+}
+type SpellVars struct {
+	Coeff     []float64
+	Dyn       string
+	Key       string
+	Link      string
+	RanksWith string
+}
+
+type LevelTip struct {
+	Effect []string
+	Label  []string
+}
+
+type Item struct {
+	Colloq               string
+	ConsumeOnFull        bool
+	Consumed             bool
+	Depth                int
+	Description          string
+	From                 []string
+	Gold                 Gold
+	Group                string
+	HideFromAll          bool
+	Id                   int
+	Image                Image
+	InStore              bool
+	Into                 []string
+	Maps                 map[string]bool
+	Name                 string
+	Plaintext            string
+	RequiredChampion     string
+	Rune                 MetaData
+	SanitizedDescription string
+	SpecialRecipe        int
+	Stacks               int
+	Stats                BasicDataStats
+	Tags                 []string
+}
+
+type BasicDataStats struct {
+	FlatArmorMod                        float64
+	FlatAttackSpeedMod                  float64
+	FlatBlockMod                        float64
+	FlatCritChanceMod                   float64
+	FlatCritDamageMod                   float64
+	FlatEXPBonus                        float64
+	FlatEnergyPoolMod                   float64
+	FlatEnergyRegenMod                  float64
+	FlatHPPoolMod                       float64
+	FlatHPRegenMod                      float64
+	FlatMPPoolMod                       float64
+	FlatMPRegenMod                      float64
+	FlatMagicDamageMod                  float64
+	FlatMovementSpeedMod                float64
+	FlatPhysicalDamageMod               float64
+	FlatSpellBlockMod                   float64
+	PercentArmorMod                     float64
+	PercentAttackSpeedMod               float64
+	PercentBlockMod                     float64
+	PercentCritChanceMod                float64
+	PercentCritDamageMod                float64
+	PercentDodgeMod                     float64
+	PercentEXPBonus                     float64
+	PercentHPPoolMod                    float64
+	PercentHPRegenMod                   float64
+	PercentLifeStealMod                 float64
+	PercentMPPoolMod                    float64
+	PercentMPRegenMod                   float64
+	PercentMagicDamageMod               float64
+	PercentMovementSpeedMod             float64
+	PercentPhysicalDamageMod            float64
+	PercentSpellBlockMod                float64
+	PercentSpellVampMod                 float64
+	RFlatArmorModPerLevel               float64
+	RFlatArmorPenetrationMod            float64
+	RFlatArmorPenetrationModPerLevel    float64
+	RFlatCritChanceModPerLevel          float64
+	RFlatCritDamageModPerLevel          float64
+	RFlatDodgeMod                       float64
+	RFlatDodgeModPerLevel               float64
+	RFlatEnergyModPerLevel              float64
+	RFlatEnergyRegenModPerLevel         float64
+	RFlatGoldPer10Mod                   float64
+	RFlatHPModPerLevel                  float64
+	RFlatHPRegenModPerLevel             float64
+	RFlatMPModPerLevel                  float64
+	RFlatMPRegenModPerLevel             float64
+	RFlatMagicDamageModPerLevel         float64
+	RFlatMagicPenetrationMod            float64
+	RFlatMagicPenetrationModPerLevel    float64
+	RFlatMovementSpeedModPerLevel       float64
+	RFlatPhysicalDamageModPerLevel      float64
+	RFlatSpellBlockModPerLevel          float64
+	RFlatTimeDeadMod                    float64
+	RFlatTimeDeadModPerLevel            float64
+	RPercentArmorPenetrationMod         float64
+	RPercentArmorPenetrationModPerLevel float64
+	RPercentAttackSpeedModPerLevel      float64
+	RPercentCooldownMod                 float64
+	RPercentCooldownModPerLevel         float64
+	RPercentMagicPenetrationMod         float64
+	RPercentMagicPenetrationModPerLevel float64
+	RPercentMovementSpeedModPerLevel    float64
+	RPercentTimeDeadMod                 float64
+	RPercentTimeDeadModPerLevel         float64
+}
+
+type Gold struct {
+	Base        int
+	Purchasable bool
+	Sell        int
+	Total       int
+}
+
+type MetaData struct {
+	IsRune bool
+	Tier   string
+	Type   string
+}
+
+type SummonerSpell struct {
+	Cooldown             []float64
+	CooldownBurn         string
+	Cost                 []int
+	CostBurn             string
+	CostType             string
+	Description          string
+	Effect               [][]int // This field is a List of List of Integer.
+	EffectBurn           []string
+	Id                   int
+	Image                Image
+	Key                  string
+	Leveltip             LevelTip
+	Maxrank              int
+	Modes                []string
+	Name                 string
+	Range                interface{} //object	This field is either a List of Integer or the String 'self' for spells that target one's own champion.
+	RangeBurn            string
+	Resource             string
+	SanitizedDescription string
+	SanitizedTooltip     string
+	SummonerLevel        int
+	Tooltip              string
+	Vars                 []SpellVars
+}
 type ErrorStatus struct {
 	Status StatusMessage
 }

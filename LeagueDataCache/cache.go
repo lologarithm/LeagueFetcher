@@ -54,6 +54,7 @@ var allRankedData map[int64]SummonerRankedData
 
 // RunCache is the primary method. Start this as a goroutine and then use other public methods to fetch from this.
 func RunCache(exit chan bool, get chan Request, put chan Response) {
+	SetupCache()
 	for {
 		select {
 		case <-exit:

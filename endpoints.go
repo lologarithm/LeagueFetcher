@@ -39,9 +39,7 @@ func init() {
 	cacheGet := make(chan lolCache.Request, 10)
 	cachePut := make(chan lolCache.Response, 10)
 	exit := make(chan bool, 1)
-	lolCache.SetupCache()
 	lolCache.CacheRunning = true
-
 	go lolCache.RunCache(exit, cacheGet, cachePut)
 
 	http.HandleFunc("/", defaultHandler)

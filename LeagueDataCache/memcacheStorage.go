@@ -4,6 +4,7 @@ import (
 	"appengine"
 	"appengine/datastore"
 	"encoding/json"
+	"errors"
 	lapi "github.com/lologarithm/LeagueFetcher/LeagueApi"
 )
 
@@ -18,6 +19,7 @@ type cachedObject struct {
 }
 
 func (mp *MemcachePersistance) PutSummoner(s lapi.Summoner) error {
+	mp.Context.Infof("PERSISTING IN DATASTORE")
 	key := datastore.NewKey(mp.Context, "Summoner", "", s.Id, nil)
 	_, err := datastore.Put(mp.Context, key, &s)
 	if err != nil {
@@ -27,7 +29,39 @@ func (mp *MemcachePersistance) PutSummoner(s lapi.Summoner) error {
 }
 
 func (mp *MemcachePersistance) GetSummoner(s *lapi.Summoner) error {
-	return datastore.Get(mp.Context, datastore.NewKey(mp.Context, "Summoner", "", s.Id, nil), &s)
+	key := datastore.NewKey(mp.Context, "Summoner", "", s.Id, nil)
+	ferr := datastore.Get(mp.Context, key, s)
+	if ferr != nil {
+		return ferr
+	}
+	return nil
+}
+
+func (mp *MemcachePersistance) GetSummoners(ids []int64) ([]*lapi.Summoner, error) {
+	keys := make([]*datastore.Key, len(ids))
+	for index, id := range ids {
+		keys[index] = datastore.NewKey(mp.Context, "Summoner", "", id, nil)
+	}
+	var entities = make([]*lapi.Summoner, 3)
+	err := datastore.GetMulti(mp.Context, keys, entities)
+	return entities, err
+}
+
+func (mp *MemcachePersistance) GetSummonerByName(s *lapi.Summoner) error {
+	query := datastore.NewQuery("Summoner").Filter("Name =", s.Name).Limit(1)
+	var summoners []lapi.Summoner
+	_, err := query.GetAll(mp.Context, &summoners)
+	if err != nil {
+		return err
+	} else if len(summoners) == 0 {
+		return errors.New("No summoner found.")
+	}
+	mp.Context.Infof("FOUND SOMETHING")
+	s.Id = summoners[0].Id
+	s.ProfileIconId = summoners[0].ProfileIconId
+	s.RevisionDate = summoners[0].RevisionDate
+	s.SummonerLevel = summoners[0].SummonerLevel
+	return nil
 }
 
 func (mp *MemcachePersistance) PutObject(objType string, id string, thing interface{}) error {

@@ -16,7 +16,7 @@ define(['jquery', 'react', 'js/components/views/matchHistoryView.js', 'js/compon
 						<div className='flexContainer flexColumn flexNone marginAnimate' style={{'width':'500px', 'margin':'50px auto 20px'}}>
 							<img className="widthAnimate" src="/imgs/logo.png" style={style} />
 							<div className='flexNone margin-bottom-s' style={{"font-size": 25}}>
-								Enter Summoner Name:
+								Summoner Search
 							</div>
 							<div className='flexContainer flexNone'>
 								<input ref="txtInput" type="text" className='flex1' value={this.state.championInputName} onChange={this.onChange} onKeyDown={this.onKeyDown} />

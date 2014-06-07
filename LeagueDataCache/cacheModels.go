@@ -38,17 +38,18 @@ func (mk MatchKey) String() string {
 }
 
 type MatchSimple struct {
-	ChampionName string     // Champion ID associated with game.
-	CreateDate   int64      // Date that end game data was recorded, specified as epoch milliseconds.
-	GameId       int64      // Game ID.
-	GameMode     string     // Game mode. (legal values: CLASSIC, ODIN, ARAM, TUTORIAL, ONEFORALL, FIRSTBLOOD)
-	GameType     string     // Game type. (legal values: CUSTOM_GAME, MATCHED_GAME, TUTORIAL_GAME)
-	Invalid      bool       // Invalid flag.
-	IpEarned     int        // IP Earned.
-	MapId        int        // Map ID.
-	Stats        MatchStats // Important Stats
-	SubType      string     // Game sub-type. (legal values: NONE, NORMAL, BOT, RANKED_SOLO_5x5, RANKED_PREMADE_3x3, RANKED_PREMADE_5x5, ODIN_UNRANKED, RANKED_TEAM_3x3, RANKED_TEAM_5x5, NORMAL_3x3, BOT_3x3, CAP_5x5, ARAM_UNRANKED_5x5, ONEFORALL_5x5, FIRSTBLOOD_1x1, FIRSTBLOOD_2x2, SR_6x6, URF, URF_BOT)
-	Side         string     // blue or purple
+	ChampionName  string     // Champion ID associated with game.
+	ChampionImage string     // URL to fetch the image of the champion
+	CreateDate    int64      // Date that end game data was recorded, specified as epoch milliseconds.
+	GameId        int64      // Game ID.
+	GameMode      string     // Game mode. (legal values: CLASSIC, ODIN, ARAM, TUTORIAL, ONEFORALL, FIRSTBLOOD)
+	GameType      string     // Game type. (legal values: CUSTOM_GAME, MATCHED_GAME, TUTORIAL_GAME)
+	Invalid       bool       // Invalid flag.
+	IpEarned      int        // IP Earned.
+	MapId         int        // Map ID.
+	Stats         MatchStats // Important Stats
+	SubType       string     // Game sub-type. (legal values: NONE, NORMAL, BOT, RANKED_SOLO_5x5, RANKED_PREMADE_3x3, RANKED_PREMADE_5x5, ODIN_UNRANKED, RANKED_TEAM_3x3, RANKED_TEAM_5x5, NORMAL_3x3, BOT_3x3, CAP_5x5, ARAM_UNRANKED_5x5, ONEFORALL_5x5, FIRSTBLOOD_1x1, FIRSTBLOOD_2x2, SR_6x6, URF, URF_BOT)
+	Side          string     // blue or purple
 }
 
 func NewMatchSimpleFromGame(g lapi.Game) (lm MatchSimple) {
@@ -125,9 +126,10 @@ type MatchDetail struct {
 }
 
 type Player struct {
-	ChampionName string // Champion name
-	ChampionId   int64  // Champion id associated with player.
-	SummonerId   int64  // Summoner id associated with player.
-	SummonerName string // Summoner name of the player
-	Side         string // blue or purple
+	ChampionId    int64  // Champion id associated with player.
+	ChampionName  string // Champion name
+	ChampionImage string // URL to fetch the image of the champion.
+	SummonerId    int64  // Summoner id associated with player.
+	SummonerName  string // Summoner name of the player
+	Side          string // blue or purple
 }

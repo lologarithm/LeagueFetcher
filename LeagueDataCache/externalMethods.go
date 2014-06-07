@@ -151,6 +151,9 @@ func GetSummonerRankedData(s lapi.Summoner, get chan Request, put chan Response,
 						cVal, _ := goGet(Request{Type: "champion", Key: stat.Id, Context: c}, get)
 						champ, _ := cVal.(lapi.Champion)
 						stat.ChampionName = champ.Name
+						if stat.Id > 0 {
+							stat.ChampionImage = champ.Image.GetImageURL()
+						}
 						stats.Champions[index] = stat
 					}
 					srd.RankedStats = stats

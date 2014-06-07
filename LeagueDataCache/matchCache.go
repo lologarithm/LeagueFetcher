@@ -15,6 +15,7 @@ func convertGamesToMatchHistory(id int64, games []lapi.Game, getChamp champFetch
 		}
 		lg := NewMatchSimpleFromGame(game)
 		lg.ChampionName = champ.Name
+		lg.ChampionImage = champ.Image.GetImageURL()
 		summary.Games = append(summary.Games, lg)
 	}
 	return summary, nil

@@ -1,5 +1,9 @@
 package LeagueApi
 
+import (
+	"fmt"
+)
+
 type Summoner struct {
 	Id            int64
 	Name          string
@@ -16,9 +20,10 @@ type RankedStats struct {
 }
 
 type ChampionStats struct {
-	Id           int64
-	ChampionName string
-	Stats        AggregatedStats
+	Id            int64
+	ChampionName  string
+	ChampionImage string
+	Stats         AggregatedStats
 }
 
 type ChampionInfoList struct {
@@ -116,11 +121,11 @@ type AggregatedStats struct {
 	NormalGamesPlayed           int `json:",omitempty"`
 	RankedPremadeGamesPlayed    int `json:",omitempty"`
 	RankedSoloGamesPlayed       int `json:",omitempty"`
-	TotalAssists                int `json:",omitempty"`
-	TotalChampionKills          int `json:",omitempty"`
+	TotalAssists                int
+	TotalChampionKills          int
 	TotalDamageDealt            int `json:",omitempty"`
 	TotalDamageTaken            int `json:",omitempty"`
-	TotalDeathsPerSession       int `json:",omitempty"`
+	TotalDeathsPerSession       int
 	TotalDoubleKills            int `json:",omitempty"`
 	TotalFirstBlood             int `json:",omitempty"`
 	TotalGoldEarned             int `json:",omitempty"`
@@ -133,9 +138,9 @@ type AggregatedStats struct {
 	TotalPentaKills             int `json:",omitempty"`
 	TotalPhysicalDamageDealt    int `json:",omitempty"`
 	TotalQuadraKills            int `json:",omitempty"`
-	TotalSessionsLost           int `json:",omitempty"`
-	TotalSessionsPlayed         int `json:",omitempty"`
-	TotalSessionsWon            int `json:",omitempty"`
+	TotalSessionsLost           int
+	TotalSessionsPlayed         int
+	TotalSessionsWon            int
 	TotalTripleKills            int `json:",omitempty"`
 	TotalTurretsKilled          int `json:",omitempty"`
 	TotalUnrealKills            int `json:",omitempty"`
@@ -338,7 +343,7 @@ type RawStats struct {
 	VisionWardsBought               int  `json:",omitempty"`
 	WardKilled                      int  `json:",omitempty"`
 	WardPlaced                      int  `json:",omitempty"`
-	Win                             bool `json:",omitempty"` //Flag specifying whether or not this game was won.
+	Win                             bool //Flag specifying whether or not this game was won.
 }
 
 type Image struct {
@@ -349,6 +354,10 @@ type Image struct {
 	W      int
 	X      int
 	Y      int
+}
+
+func (i Image) GetImageURL() string {
+	return fmt.Sprintf("http://ddragon.leagueoflegends.com/cdn/4.2.6/img/%s/%s", i.Group, i.Full)
 }
 
 type Info struct {

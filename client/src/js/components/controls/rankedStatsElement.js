@@ -7,8 +7,8 @@ define(['jquery', 'react', 'moment', 'js/stores/summonerStore.js'], function ($,
 			var kda = 'KDA: ' + this.formatNumber((this.props.data.Stats.TotalChampionKills + this.props.data.Stats.TotalAssists) / this.props.data.Stats.TotalDeathsPerSession);
 
 			return <div className='matchHistoryElement padding-m' style={elmStyle}  >
-						<span style={{'width':'100px','display':'inline-block'}}>{this.props.data.ChampionName}</span>
-						<span style={{'width':'100px','display':'inline-block'}}>{kda}</span>
+						<img style={{'width': '50px'}} src={this.props.data.ChampionImage} />
+						<span style={{'paddingLeft': '15px', 'width':'100px','display':'inline-block'}}>{kda}</span>
 						<span>
 							<span style={{'color':'green'}}>{this.formatNumber(this.props.data.Stats.TotalChampionKills / this.props.data.Stats.TotalSessionsPlayed)}</span>/
 							<span style={{'color':'red'}}>{this.formatNumber(this.props.data.Stats.TotalDeathsPerSession / this.props.data.Stats.TotalSessionsPlayed)}</span>/

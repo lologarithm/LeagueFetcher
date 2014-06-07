@@ -16,7 +16,9 @@ const (
 )
 
 type PersistanceProvider interface {
-	//PutSummoner(lapi.Summoner)
+	PutSummoner(lapi.Summoner) error
+	GetSummoner(*lapi.Summoner) error
+	GetSummonerByName(*lapi.Summoner) error
 	//PutMatch(lapi.Game)
 	PutObject(string, string, interface{}) error
 	GetObject(string, string, interface{}) error
@@ -72,10 +74,9 @@ func putCache(resp Response) {
 	switch resp.Type {
 	case "summoner":
 		if summoner, ok := resp.Value.(lapi.Summoner); ok {
-			allSummonersById[summoner.Id] = summoner
-			key := NormalizeString(summoner.Name)
-			allSummonersByName[key] = summoner
-			resp.Persist.PutObject("Summoner", key, summoner)
+			cacheSummoner(summoner)
+			//resp.Persist.PutObject("Summoner", key, summoner)
+			resp.Persist.PutSummoner(summoner)
 		}
 	case "champion":
 		// For now the local cache will handle this.
@@ -130,9 +131,11 @@ func wrappedFetch(request Request, api *lapi.LolFetcher) {
 				response.Ok = true
 				response.Value = summoner
 			} else {
-				var persistSummoner *lapi.Summoner
-				persistErr := request.Persist.GetObject("Summoner", key, &persistSummoner)
+				persistSummoner := &lapi.Summoner{Name: key}
+				//persistErr := request.Persist.GetObject("Summoner", key, &persistSummoner)
+				persistErr := request.Persist.GetSummonerByName(persistSummoner)
 				if persistErr == nil {
+					cacheSummoner(*persistSummoner)
 					response.Value = *persistSummoner
 					response.Ok = true
 				}
@@ -210,6 +213,11 @@ func wrappedFetch(request Request, api *lapi.LolFetcher) {
 	request.Response <- *response
 }
 
+func cacheSummoner(summoner lapi.Summoner) {
+	allSummonersById[summoner.Id] = summoner
+	key := NormalizeString(summoner.Name)
+	allSummonersByName[key] = summoner
+}
 func SetupCache() {
 	loadChampions(championCache)
 	loadSummoners(summonerCache)

@@ -5,11 +5,12 @@ import (
 )
 
 type Summoner struct {
-	Id            int64
-	Name          string
-	ProfileIconId int   `datastore:",noindex"`
-	SummonerLevel int   `datastore:",noindex"`
-	RevisionDate  int64 `datastore:",noindex"`
+	Id             int64
+	Name           string
+	NormalizedName string
+	ProfileIconId  int   `datastore:",noindex"`
+	SummonerLevel  int   `datastore:",noindex"`
+	RevisionDate   int64 `datastore:",noindex"`
 }
 
 type RankedStats struct {

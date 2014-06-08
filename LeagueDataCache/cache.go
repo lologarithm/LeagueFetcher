@@ -2,8 +2,6 @@
 package LeagueDataCache
 
 import (
-	"appengine"
-	"appengine/urlfetch"
 	lapi "github.com/lologarithm/LeagueFetcher/LeagueApi"
 	"strings"
 	"time"
@@ -32,15 +30,13 @@ type Request struct {
 	Response chan Response
 	Type     string
 	Key      interface{}
-	Context  appengine.Context // Currently only needed for logging.
 }
 
 type Response struct {
-	Context appengine.Context
-	Key     interface{}
-	Value   interface{}
-	Type    string
-	Ok      bool
+	Key   interface{}
+	Value interface{}
+	Type  string
+	Ok    bool
 }
 
 var CacheRunning bool
@@ -93,11 +89,8 @@ func putCache(resp Response) {
 				// Always re-cache here for updated match time.
 				allGames[key] = match
 			}
-		} else {
-			resp.Context.Infof("Cache: Failed to get game, not a game key!")
 		}
 	case "game":
-		resp.Context.Warningf("Caching individual games doesn't work right now.")
 		break
 		// Fix this up later if we ever use it.
 		if key, ok := resp.Key.(MatchKey); ok {
@@ -114,12 +107,6 @@ func putCache(resp Response) {
 }
 
 func fetchCache(request Request) {
-	client := urlfetch.Client(request.Context)
-	api := &lapi.LolFetcher{Get: client.Get, Log: request.Context}
-	wrappedFetch(request, api)
-}
-
-func wrappedFetch(request Request, api *lapi.LolFetcher) {
 	response := &Response{Ok: false}
 	switch request.Type {
 	case "summoner":
@@ -132,8 +119,7 @@ func wrappedFetch(request Request, api *lapi.LolFetcher) {
 		}
 	case "champion":
 		if intKey, ok := request.Key.(int64); ok {
-			champ, fErr := fetchAndCacheChampion(intKey, api)
-			if fErr == nil {
+			if champ, ok := allChampions[intKey]; ok {
 				response.Value = champ
 				response.Ok = true
 			}
@@ -148,29 +134,23 @@ func wrappedFetch(request Request, api *lapi.LolFetcher) {
 					if len(games) < 10 {
 						sliceEnd = len(games)
 					}
-					matchHistory, fetchErr := convertGamesToMatchHistory(intKey, games[0:sliceEnd], fetchAndCacheChampion, api)
+					matchHistory, fetchErr := convertGamesToMatchHistory(intKey, games[0:sliceEnd])
 					if fetchErr == nil {
 						response.Value = matchHistory
 						response.Ok = true
 					}
 				}
-			} else {
-				request.Context.Warningf("Cache: No games found for that id.")
 			}
-		} else {
-			request.Context.Warningf("Cache: Not int key for fetching games.")
 		}
 	case "game":
 		if key, ok := request.Key.(MatchKey); ok {
 			if game, ok := allGames[key]; ok {
-				gameDetail, fErr := convertGameToMatchDetail(game, api)
+				gameDetail, fErr := convertGameToMatchDetail(game)
 				if fErr == nil {
 					response.Value = gameDetail
 					response.Ok = true
 				}
 			}
-		} else {
-			request.Context.Warningf("Cache: Failed to get game, not a game key!")
 		}
 	case "team":
 	case "rankedData":
@@ -179,8 +159,6 @@ func wrappedFetch(request Request, api *lapi.LolFetcher) {
 				if data.ExpireTime > time.Now().Unix() {
 					response.Value = data
 					response.Ok = true
-				} else {
-					request.Context.Warningf("Cached ranked data is too old.")
 				}
 			}
 		}

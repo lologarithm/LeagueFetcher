@@ -6,17 +6,15 @@ import (
 
 type champFetchFunc func(id int64, api *lapi.LolFetcher) (lapi.Champion, error)
 
-func convertGamesToMatchHistory(id int64, games []lapi.Game, getChamp champFetchFunc, api *lapi.LolFetcher) (MatchHistory, error) {
+func convertGamesToMatchHistory(id int64, games []lapi.Game) (MatchHistory, error) {
 	summary := MatchHistory{SummonerId: id}
 	for _, game := range games {
-		champ, fErr := getChamp(game.ChampionId, api)
-		if fErr != nil {
-			return summary, fErr
-		}
 		lg := NewMatchSimpleFromGame(game)
-		lg.ChampionName = champ.Name
-		if champ.Id > 0 {
-			lg.ChampionImage = champ.Image.GetImageURL()
+		if champ, ok := allChampions[game.ChampionId]; ok {
+			lg.ChampionName = champ.Name
+			if champ.Id > 0 {
+				lg.ChampionImage = champ.Image.GetImageURL()
+			}
 		}
 		summary.Games = append(summary.Games, lg)
 	}
@@ -24,21 +22,16 @@ func convertGamesToMatchHistory(id int64, games []lapi.Game, getChamp champFetch
 }
 
 // Fetches a cached match and returns detailed match.
-func convertGameToMatchDetail(g lapi.Game, api *lapi.LolFetcher) (MatchDetail, error) {
+func convertGameToMatchDetail(g lapi.Game) (MatchDetail, error) {
 	lmd := NewMatchDetailsFromGame(g)
-	champ, fErr := fetchAndCacheChampion(g.ChampionId, api)
-	if fErr != nil {
-		return MatchDetail{}, fErr
+	if champ, ok := allChampions[g.ChampionId]; ok {
+		lmd.ChampionName = champ.Name
 	}
-	lmd.ChampionName = champ.Name
 	for ind, p := range lmd.FellowPlayers {
 
-		champ, fErr := fetchAndCacheChampion(p.ChampionId, api)
-		if fErr != nil {
-			return MatchDetail{}, fErr
+		if champ, ok := allChampions[p.ChampionId]; ok {
+			p.ChampionName = champ.Name
 		}
-
-		p.ChampionName = champ.Name
 		if summ, ok := allSummonersById[p.SummonerId]; ok {
 			p.SummonerName = summ.Name
 		}

@@ -87,7 +87,7 @@ func handleRecentMatches(w http.ResponseWriter, r *http.Request, cacheGet chan l
 	summoner, fetchErr := lolCache.GetSummoner(html.UnescapeString(r.FormValue("name")), cacheGet, cachePut, c, &lolCache.MemcachePersistance{Context: c})
 
 	if fetchErr != nil {
-		returnErrJson(fetchErr, w)
+		returnErrJson(fetchErr, w, c)
 		return
 	}
 	matches, fetchErr := lolCache.GetSummonerMatchesSimple(summoner.Id, cacheGet, cachePut, c, &lolCache.MemcachePersistance{Context: c})
@@ -99,32 +99,32 @@ func handleRecentMatches(w http.ResponseWriter, r *http.Request, cacheGet chan l
 	}
 
 	if fetchErr != nil {
-		returnErrJson(fetchErr, w)
+		returnErrJson(fetchErr, w, c)
 		return
 	}
-	writeJson(w, matches)
+	writeJson(w, matches, c)
 }
 
 func handleMatchDetails(w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {
 	c := appengine.NewContext(r)
 	matchId, intErr := strconv.ParseInt(r.FormValue("matchId"), 10, 64)
 	if intErr != nil {
-		returnErrJson(intErr, w)
+		returnErrJson(intErr, w, c)
 		return
 	}
 	summonerId, intErr := strconv.ParseInt(r.FormValue("summonerId"), 10, 64)
 	if intErr != nil {
-		returnErrJson(intErr, w)
+		returnErrJson(intErr, w, c)
 		return
 	}
 
 	match, fetchErr := lolCache.GetMatch(matchId, summonerId, cacheGet, cachePut, c, &lolCache.MemcachePersistance{Context: c})
 	if fetchErr != nil {
-		returnErrJson(fetchErr, w)
+		returnErrJson(fetchErr, w, c)
 		return
 	}
 
-	writeJson(w, match)
+	writeJson(w, match, c)
 }
 
 func handleChampion(w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {
@@ -136,39 +136,38 @@ func handleChampion(w http.ResponseWriter, r *http.Request, cacheGet chan lolCac
 	}
 	champ, fetchErr := lolCache.GetChampion(champId, cacheGet, c)
 	if fetchErr != nil {
-		returnErrJson(fetchErr, w)
+		returnErrJson(fetchErr, w, c)
 		return
 	}
-	writeJson(w, champ)
+	writeJson(w, champ, c)
 }
 
 func handleRankedData(w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {
 	c := appengine.NewContext(r)
 	summoner, fetchErr := lolCache.GetSummoner(html.UnescapeString(r.FormValue("name")), cacheGet, cachePut, c, &lolCache.MemcachePersistance{Context: c})
 	if fetchErr != nil {
-		returnErrJson(fetchErr, w)
+		returnErrJson(fetchErr, w, c)
 		return
 	}
 
 	data, fetchErr := lolCache.GetSummonerRankedData(summoner, cacheGet, cachePut, c)
 	if fetchErr != nil {
-		returnErrJson(fetchErr, w)
+		returnErrJson(fetchErr, w, c)
 		return
 	}
-	writeJson(w, data)
+	writeJson(w, data, c)
 }
 
 func handleGameCache(w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {
 	c := appengine.NewContext(r)
-	c.Infof("Caching Match")
 	matchId, intErr := strconv.ParseInt(r.FormValue("matchId"), 10, 64)
 	if intErr != nil {
-		returnErrJson(intErr, w)
+		returnErrJson(intErr, w, c)
 		return
 	}
 	summonerId, intErr := strconv.ParseInt(r.FormValue("summonerId"), 10, 64)
 	if intErr != nil {
-		returnErrJson(intErr, w)
+		returnErrJson(intErr, w, c)
 		return
 	}
 
@@ -179,16 +178,17 @@ func returnEmptyJson(w http.ResponseWriter) {
 	w.Write([]byte("{}"))
 }
 
-func returnErrJson(e error, w http.ResponseWriter) {
+func returnErrJson(e error, w http.ResponseWriter, context appengine.Context) {
 	msg := fmt.Sprintf("{\"error\": \"%s\"}", e.Error())
+	context.Infof("Returning Error: %s", e.Error())
 	w.Write([]byte(msg))
 }
 
-func writeJson(w http.ResponseWriter, data interface{}) {
+func writeJson(w http.ResponseWriter, data interface{}, context appengine.Context) {
 	w.Header().Set("Content-Type", "application/json")
 	dataJson, jsonErr := json.Marshal(data)
 	if jsonErr != nil {
-		returnEmptyJson(w)
+		returnErrJson(jsonErr, w, context)
 		return
 	}
 	w.Write(dataJson)

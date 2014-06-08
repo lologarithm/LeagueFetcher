@@ -21,6 +21,7 @@ type cachedObject struct {
 
 func (mp *MemcachePersistance) PutSummoner(s lapi.Summoner) error {
 	key := datastore.NewKey(mp.Context, "TSummoner", "", s.Id, nil)
+	s.NormalizedName = NormalizeString(s.Name)
 	_, err := datastore.Put(mp.Context, key, &s)
 	if err != nil {
 		return err
@@ -44,11 +45,23 @@ func (mp *MemcachePersistance) GetSummoners(ids []int64) ([]lapi.Summoner, error
 	}
 	var entities = make([]lapi.Summoner, len(keys))
 	err := datastore.GetMulti(mp.Context, keys, entities)
+
+	if err != nil {
+		actualEntities := []lapi.Summoner{}
+		if me, ok := err.(appengine.MultiError); ok {
+			for i, merr := range me {
+				if merr == nil {
+					actualEntities = append(actualEntities, entities[i])
+				}
+			}
+		}
+		return actualEntities, err
+	}
 	return entities, err
 }
 
 func (mp *MemcachePersistance) GetSummonerByName(s *lapi.Summoner) error {
-	query := datastore.NewQuery("TSummoner").Filter("Name =", s.Name).Limit(1)
+	query := datastore.NewQuery("TSummoner").Filter("NormalizedName =", s.NormalizedName).Limit(1)
 	var summoners []lapi.Summoner
 	_, err := query.GetAll(mp.Context, &summoners)
 	if err != nil {
@@ -61,6 +74,7 @@ func (mp *MemcachePersistance) GetSummonerByName(s *lapi.Summoner) error {
 	s.ProfileIconId = summoners[0].ProfileIconId
 	s.RevisionDate = summoners[0].RevisionDate
 	s.SummonerLevel = summoners[0].SummonerLevel
+	s.Name = summoners[0].Name
 	return nil
 }
 

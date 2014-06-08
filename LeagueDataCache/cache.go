@@ -21,8 +21,10 @@ type PersistanceProvider interface {
 	GetSummonerByName(*lapi.Summoner) error
 	GetSummoners([]int64) ([]lapi.Summoner, error)
 	//PutMatch(lapi.Game)
-	PutObject(string, string, interface{}) error
+	PutObject(string, string, int64, interface{}) error
+	PutObjects(string, []string, []int64, []interface{}) error
 	GetObject(string, string, interface{}) error
+	GetMatchesByIndex(int64) ([]lapi.Game, error)
 }
 
 // TODO: Maybe merge the request/response together?
@@ -30,8 +32,7 @@ type Request struct {
 	Response chan Response
 	Type     string
 	Key      interface{}
-	Context  appengine.Context
-	Persist  PersistanceProvider
+	Context  appengine.Context // Currently only needed for logging.
 }
 
 type Response struct {
@@ -40,7 +41,6 @@ type Response struct {
 	Value   interface{}
 	Type    string
 	Ok      bool
-	Persist PersistanceProvider
 }
 
 var CacheRunning bool
@@ -57,7 +57,6 @@ var allRankedData map[int64]SummonerRankedData
 
 // RunCache is the primary method. Start this as a goroutine and then use other public methods to fetch from this.
 func RunCache(exit chan bool, get chan Request, put chan Response) {
-	SetupCache()
 	for {
 		select {
 		case <-exit:
@@ -76,7 +75,6 @@ func putCache(resp Response) {
 	case "summoner":
 		if summoner, ok := resp.Value.(lapi.Summoner); ok {
 			cacheSummoner(summoner)
-			resp.Persist.PutSummoner(summoner)
 		}
 	case "champion":
 		// For now the local cache will handle this.
@@ -94,17 +92,17 @@ func putCache(resp Response) {
 				}
 				// Always re-cache here for updated match time.
 				allGames[key] = match
-				go resp.Persist.PutObject("Match", key.String(), match)
 			}
 		} else {
 			resp.Context.Infof("Cache: Failed to get game, not a game key!")
 		}
 	case "game":
+		resp.Context.Warningf("Caching individual games doesn't work right now.")
+		break
 		// Fix this up later if we ever use it.
 		if key, ok := resp.Key.(MatchKey); ok {
 			if game, ok := resp.Value.(lapi.Game); ok {
 				allGames[key] = game
-				resp.Persist.PutObject("Match", key.String(), game)
 			}
 		}
 	case "rankedData":
@@ -130,15 +128,6 @@ func wrappedFetch(request Request, api *lapi.LolFetcher) {
 			if summoner, ok := allSummonersByName[key]; ok {
 				response.Ok = true
 				response.Value = summoner
-			} else {
-				persistSummoner := &lapi.Summoner{Name: key}
-				//persistErr := request.Persist.GetObject("Summoner", key, &persistSummoner)
-				persistErr := request.Persist.GetSummonerByName(persistSummoner)
-				if persistErr == nil {
-					cacheSummoner(*persistSummoner)
-					response.Value = *persistSummoner
-					response.Ok = true
-				}
 			}
 		}
 	case "champion":
@@ -164,8 +153,6 @@ func wrappedFetch(request Request, api *lapi.LolFetcher) {
 						response.Value = matchHistory
 						response.Ok = true
 					}
-				} else {
-					request.Context.Warningf("Cached games are old or no games found.")
 				}
 			} else {
 				request.Context.Warningf("Cache: No games found for that id.")
@@ -176,22 +163,10 @@ func wrappedFetch(request Request, api *lapi.LolFetcher) {
 	case "game":
 		if key, ok := request.Key.(MatchKey); ok {
 			if game, ok := allGames[key]; ok {
-				gameDetail, fErr := convertGameToMatchDetail(game, request, api)
+				gameDetail, fErr := convertGameToMatchDetail(game, api)
 				if fErr == nil {
 					response.Value = gameDetail
 					response.Ok = true
-				}
-			} else {
-				var persistGame *lapi.Game
-				persistErr := request.Persist.GetObject("Match", key.String(), &persistGame)
-				if persistErr != nil {
-					request.Context.Warningf("Cache: Failed to get game: %v", key)
-				} else {
-					gameDetail, fErr := convertGameToMatchDetail(*persistGame, request, api)
-					if fErr == nil {
-						response.Value = gameDetail
-						response.Ok = true
-					}
 				}
 			}
 		} else {
@@ -218,6 +193,7 @@ func cacheSummoner(summoner lapi.Summoner) {
 	key := NormalizeString(summoner.Name)
 	allSummonersByName[key] = summoner
 }
+
 func SetupCache() {
 	loadChampions(championCache)
 	loadSummoners(summonerCache)

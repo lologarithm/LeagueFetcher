@@ -2,6 +2,7 @@ package main
 
 import (
 	"appengine"
+	"appengine/taskqueue"
 	"encoding/json"
 	"fmt"
 	lapi "github.com/lologarithm/LeagueFetcher/LeagueApi"
@@ -40,6 +41,7 @@ func init() {
 	cachePut := make(chan lolCache.Response, 10)
 	exit := make(chan bool, 1)
 	lolCache.CacheRunning = true
+	lolCache.SetupCache()
 	go lolCache.RunCache(exit, cacheGet, cachePut)
 
 	http.HandleFunc("/", defaultHandler)
@@ -89,6 +91,13 @@ func handleRecentMatches(w http.ResponseWriter, r *http.Request, cacheGet chan l
 		return
 	}
 	matches, fetchErr := lolCache.GetSummonerMatchesSimple(summoner.Id, cacheGet, cachePut, c, &lolCache.MemcachePersistance{Context: c})
+
+	// Now send tasks to start caching all games from other summoner perspecives.ServerConfig
+	for _, match := range matches.Games {
+		t := taskqueue.NewPOSTTask("/task/cacheGames", map[string][]string{"matchId": {strconv.FormatInt(match.GameId, 10)}, "summonerId": {strconv.FormatInt(summoner.Id, 10)}})
+		taskqueue.Add(c, t, "")
+	}
+
 	if fetchErr != nil {
 		returnErrJson(fetchErr, w)
 		return
@@ -150,6 +159,20 @@ func handleRankedData(w http.ResponseWriter, r *http.Request, cacheGet chan lolC
 }
 
 func handleGameCache(w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {
+	c := appengine.NewContext(r)
+	c.Infof("Caching Match")
+	matchId, intErr := strconv.ParseInt(r.FormValue("matchId"), 10, 64)
+	if intErr != nil {
+		returnErrJson(intErr, w)
+		return
+	}
+	summonerId, intErr := strconv.ParseInt(r.FormValue("summonerId"), 10, 64)
+	if intErr != nil {
+		returnErrJson(intErr, w)
+		return
+	}
+
+	lolCache.CacheMatch(matchId, summonerId, cacheGet, cachePut, c, &lolCache.MemcachePersistance{Context: c})
 }
 
 func returnEmptyJson(w http.ResponseWriter) {

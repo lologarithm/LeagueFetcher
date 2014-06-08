@@ -7,9 +7,9 @@ import (
 type Summoner struct {
 	Id            int64
 	Name          string
-	ProfileIconId int
-	SummonerLevel int
-	RevisionDate  int64
+	ProfileIconId int   `datastore:",noindex"`
+	SummonerLevel int   `datastore:",noindex"`
+	RevisionDate  int64 `datastore:",noindex"`
 }
 
 type RankedStats struct {

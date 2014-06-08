@@ -5,10 +5,11 @@ import (
 	"appengine/urlfetch"
 	"errors"
 	lapi "github.com/lologarithm/LeagueFetcher/LeagueApi"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"strings"
-	//	"time"
+	"time"
 )
 
 // Public Functions that use channel to communicate with cache goroutine
@@ -196,6 +197,8 @@ func GetMatch(matchId int64, summonerId int64, get chan Request, put chan Respon
 
 // Fetch and Cache all summoners and their perspective on the game.
 func CacheMatch(matchId int64, summonerId int64, get chan Request, put chan Response, c appengine.Context, persist PersistanceProvider) {
+	r := rand.Intn(1000)
+	time.Sleep(time.Millisecond * r)
 	mKey := MatchKey{MatchId: matchId, SummonerId: summonerId}
 	c.Infof("Fetching details of: %v to cache other summoners.", mKey)
 	value, getErr := goGet(Request{Type: "game", Key: mKey}, get)

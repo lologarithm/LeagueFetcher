@@ -437,6 +437,15 @@ type LevelTip struct {
 	Label  []string
 }
 
+type ItemList struct {
+	Basic   BasicData
+	Data    map[string]Item
+	Groups  []Group
+	Tree    []ItemTree
+	Type    string
+	Version string
+}
+
 type Item struct {
 	Colloq               string
 	ConsumeOnFull        bool
@@ -448,6 +457,42 @@ type Item struct {
 	Group                string
 	HideFromAll          bool
 	Id                   int
+	Image                Image
+	InStore              bool
+	Into                 []string
+	Maps                 map[string]bool
+	Name                 string
+	Plaintext            string
+	RequiredChampion     string
+	Rune                 MetaData
+	SanitizedDescription string
+	SpecialRecipe        int
+	Stacks               int
+	Stats                BasicDataStats
+	Tags                 []string
+}
+
+type ItemTree struct {
+	Header string
+	Tags   []string
+}
+
+type Group struct {
+	MaxGroupOwnable string
+	Key             string
+}
+
+type BasicData struct {
+	Colloq               string
+	ConsumeOnFull        bool
+	Consumed             bool
+	Depth                int
+	Description          string
+	From                 []string
+	Gold                 Gold
+	Group                string
+	HideFromAll          bool
+	Id                   int64
 	Image                Image
 	InStore              bool
 	Into                 []string

@@ -26,7 +26,7 @@ const (
 	region          = "na"
 	summonerVersion = "v1.4"
 	statsVersion    = "v1.3"
-	champVersion    = "v1.2"
+	staticVersion   = "v1.2"
 	leagueVersion   = "v2.4"
 	teamVersion     = "v2.3"
 	gameVersion     = "v1.3"
@@ -156,7 +156,13 @@ func (lf *LolFetcher) GetSummonerTeams(id int64, get RemoteGet) (teams map[strin
 
 func (lf *LolFetcher) GetAllChampions() (champs ChampionList, e error) {
 	params := "&champData=all"
-	e = lf.makeRequest(lf.makeStaticDataUrl(champVersion, "champion", params), &champs)
+	e = lf.makeRequest(lf.makeStaticDataUrl(staticVersion, "champion", params), &champs)
+	return
+}
+
+func (lf *LolFetcher) GetAllItems() (items ItemList, e error) {
+	params := "&itemListData=all"
+	e = lf.makeRequest(lf.makeStaticDataUrl(staticVersion, "item", params), &items)
 	return
 }
 
@@ -167,7 +173,7 @@ func (lf *LolFetcher) GetChampion(id int64) (champ Champion, e error) {
 	}
 	params := "&champData=all"
 	method := fmt.Sprintf("champion/%d", id)
-	e = lf.makeRequest(lf.makeStaticDataUrl(champVersion, method, params), &champ)
+	e = lf.makeRequest(lf.makeStaticDataUrl(staticVersion, method, params), &champ)
 	return
 }
 

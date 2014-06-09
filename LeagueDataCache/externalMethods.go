@@ -197,8 +197,8 @@ func GetMatch(matchId int64, summonerId int64, get chan Request, put chan Respon
 
 // Fetch and Cache all summoners and their perspective on the game.
 func CacheMatch(matchId int64, summonerId int64, get chan Request, put chan Response, c appengine.Context, persist PersistanceProvider) {
-	r := rand.Intn(1000)
-	time.Sleep(time.Millisecond * r)
+	// Sleep random amount of time so we don't get too much overlapping
+	time.Sleep(time.Duration(rand.Intn(1000)) * time.Millisecond)
 	mKey := MatchKey{MatchId: matchId, SummonerId: summonerId}
 	c.Infof("Fetching details of: %v to cache other summoners.", mKey)
 	value, getErr := goGet(Request{Type: "game", Key: mKey}, get)

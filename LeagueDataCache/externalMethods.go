@@ -173,6 +173,7 @@ func GetMatch(matchId int64, summonerId int64, get chan Request, put chan Respon
 				}
 			}
 		}
+		// Only fetch from API if not all summoners were returned from persistance.
 		if dbErr != nil {
 			fetchedSummoners, apiErr := api.GetSummonersById(missingIds)
 			if apiErr != nil {

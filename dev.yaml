@@ -11,36 +11,36 @@ handlers:
   upload: favicon\.ico
 
 - url: /css
-  static_dir: client/src/css
+  static_dir: src/github.com/lologarithm/LeagueFetcher/client/src/css
 
 - url: /js/node_modules
-  static_dir: client/node_modules
+  static_dir: src/github.com/lologarithm/LeagueFetcher/client/node_modules
 
 - url: /js/bower_components
-  static_dir: client/bower_components
+  static_dir: src/github.com/lologarithm/LeagueFetcher/client/bower_components
 
 - url: /js
-  static_dir: client/build/js
+  static_dir: src/github.com/lologarithm/LeagueFetcher/client/build/js
 
 - url: /imgs
-  static_dir: client/src/imgs
+  static_dir: src/github.com/lologarithm/LeagueFetcher/client/src/imgs
 
 - url: /
-  static_files: client/src/index.html
-  upload: client/src/index.html
+  static_files: src/github.com/lologarithm/LeagueFetcher/client/src/index.html
+  upload: src/github.com/lologarithm/LeagueFetcher/client/src/index.html
 
 - url: /.*
   script: _go_app
 
 skip_files:
-- ^client/test/.*
-- ^client/node_modules/react-tools/.*
-- ^client/node_modules/grunt/.*
-- ^client/node_modules/grunt-contrib-concat/.*
-- ^client/node_modules/grunt-contrib-cssmin/.*
-- ^client/node_modules/grunt-contrib-uglify/.*
-- ^client/node_modules/grunt-contrib-watch/.*
-- ^client/node_modules/esprima-fb/.*
+- ^src/github.com/lologarithm/LeagueFetcher/client/test/.*
+- ^src/github.com/lologarithm/LeagueFetcher/client/node_modules/react-tools/.*
+- ^src/github.com/lologarithm/LeagueFetcher/client/node_modules/grunt/.*
+- ^src/github.com/lologarithm/LeagueFetcher/client/node_modules/grunt-contrib-concat/.*
+- ^src/github.com/lologarithm/LeagueFetcher/client/node_modules/grunt-contrib-cssmin/.*
+- ^src/github.com/lologarithm/LeagueFetcher/client/node_modules/grunt-contrib-uglify/.*
+- ^src/github.com/lologarithm/LeagueFetcher/client/node_modules/grunt-contrib-watch/.*
+- ^src/github.com/lologarithm/LeagueFetcher/client/node_modules/esprima-fb/.*
 - ^(.*/)?#.*#$
 - ^(.*/)?.*~$
 - ^(.*/)?.*\.py[co]$

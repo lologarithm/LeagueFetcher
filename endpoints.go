@@ -2,6 +2,7 @@ package main
 
 import (
 	"appengine"
+	"appengine/datastore"
 	"appengine/taskqueue"
 	"encoding/json"
 	"fmt"
@@ -66,6 +67,11 @@ func init() {
 	http.HandleFunc("/task/cacheGames", func(w http.ResponseWriter, req *http.Request) {
 		timeEndpoint(handleGameCache, w, req, cacheGet, cachePut)
 	})
+
+	http.HandleFunc("/clean", func(w http.ResponseWriter, req *http.Request) {
+		timeEndpoint(cleanDatastore, w, req, cacheGet, cachePut)
+	})
+
 	http.HandleFunc("/log", handleLog)
 }
 
@@ -172,6 +178,22 @@ func handleGameCache(w http.ResponseWriter, r *http.Request, cacheGet chan lolCa
 	}
 
 	lolCache.CacheMatch(matchId, summonerId, cacheGet, cachePut, c, &lolCache.MemcachePersistance{Context: c})
+}
+
+func cleanDatastore(w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {
+	if r.FormValue("p") != "ben" {
+		returnEmptyJson(w)
+		return
+	}
+
+	c := appengine.NewContext(r)
+	var keys []*datastore.Key
+	keys, err := datastore.NewQuery("Match").Filter("IntIndex = ", nil).KeysOnly().GetAll(c, keys)
+	if err != nil {
+		returnErrJson(err, w, c)
+	}
+	datastore.DeleteMulti(c, keys)
+
 }
 
 func returnEmptyJson(w http.ResponseWriter) {

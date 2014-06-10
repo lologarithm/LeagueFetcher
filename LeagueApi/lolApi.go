@@ -3,7 +3,6 @@ package LeagueApi
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -47,7 +46,16 @@ type LolFetcher struct {
 
 type ApiAsyncResponse struct {
 	Value interface{}
-	Error error
+	Error *FetchError
+}
+
+type FetchError struct {
+	Message string
+	Code    int
+}
+
+func (fe *FetchError) Error() string {
+	return fmt.Sprintf("Error: %s, Code: %d", fe.Message, fe.Code)
 }
 
 func (lf *LolFetcher) makeUrl(version string, method string) string {
@@ -62,23 +70,23 @@ func (lf *LolFetcher) makeStaticDataUrl(version string, method string, params st
 	return url
 }
 
-func (lf *LolFetcher) makeRequest(url string, value interface{}) error {
+func (lf *LolFetcher) makeRequest(url string, value interface{}) *FetchError {
 	st := time.Now().UnixNano()
 	resp, err := lf.Get(url)
 	if err != nil {
 		lf.Log.Warningf("Failed to open conn: %s\n", err.Error())
-		return errors.New("Connection Failed.")
+		return &FetchError{Message: "Connection Failed.", Code: 0}
 	}
 
 	if resp.StatusCode != 200 {
 		lf.Log.Warningf("Request (%s) failed with code %d, Status: %s", url, resp.StatusCode, resp.Status)
-		return errors.New(resp.Status)
+		return &FetchError{Message: resp.Status, Code: resp.StatusCode}
 	}
 
 	body, bodyErr := ioutil.ReadAll(resp.Body)
 	if bodyErr != nil {
 		lf.Log.Warningf("Failed to parse response body.: %s\n", err.Error())
-		return errors.New("Failed to parse response body.")
+		return &FetchError{Message: err.Error(), Code: resp.StatusCode}
 	}
 
 	unmarshErr := json.Unmarshal(body, value)
@@ -87,9 +95,9 @@ func (lf *LolFetcher) makeRequest(url string, value interface{}) error {
 		lf.Log.Infof("Failed JSON: %s", string(body))
 		var sErr ErrorStatus
 		statsError := json.Unmarshal(body, &sErr)
-		if statsError == nil && sErr.Status.StatusCode == 429 {
+		if statsError == nil {
 			lf.Log.Warningf("Rate Limit Exceeded on request: %s", url)
-			return errors.New("Rate Limit Exceeded.")
+			return &FetchError{Message: sErr.Status.Message, Code: sErr.Status.StatusCode}
 		}
 	}
 
@@ -97,13 +105,13 @@ func (lf *LolFetcher) makeRequest(url string, value interface{}) error {
 	return nil
 }
 
-func (lf *LolFetcher) GetSummonerByName(name string) (summoners map[string]Summoner, limit error) {
+func (lf *LolFetcher) GetSummonerByName(name string) (summoners map[string]Summoner, limit *FetchError) {
 	name = NormalizeString(name)
 	limit = lf.makeRequest(lf.makeUrl(summonerVersion, "summoner/by-name/"+name), &summoners)
 	return
 }
 
-func (lf *LolFetcher) GetSummonersById(ids []int64) (summoners map[string]Summoner, limit error) {
+func (lf *LolFetcher) GetSummonersById(ids []int64) (summoners map[string]Summoner, limit *FetchError) {
 	var buffer bytes.Buffer
 	buffer.WriteString("summoner/")
 	for _, id := range ids {
@@ -114,7 +122,7 @@ func (lf *LolFetcher) GetSummonersById(ids []int64) (summoners map[string]Summon
 	return
 }
 
-func (lf *LolFetcher) GetSummonerRankedStats(id int64) (srs RankedStats, limit error) {
+func (lf *LolFetcher) GetSummonerRankedStats(id int64) (srs RankedStats, limit *FetchError) {
 	method := fmt.Sprintf("stats/by-summoner/%d/ranked", id)
 	limit = lf.makeRequest(lf.makeUrl(statsVersion, method), &srs)
 	return
@@ -128,13 +136,13 @@ func (lf *LolFetcher) GetSummonerRankedStatsAsync(id int64, resp chan ApiAsyncRe
 	resp <- val
 }
 
-func (lf *LolFetcher) GetSummonerSummaryStats(id int64) (stats PlayerStatsSummaryList, e error) {
+func (lf *LolFetcher) GetSummonerSummaryStats(id int64) (stats PlayerStatsSummaryList, e *FetchError) {
 	method := fmt.Sprintf("stats/by-summoner/%d/summary", id)
 	e = lf.makeRequest(lf.makeUrl(statsVersion, method), &stats)
 	return
 }
 
-func (lf *LolFetcher) GetSummonerLeagues(id int64) (leagues map[string][]League, e error) {
+func (lf *LolFetcher) GetSummonerLeagues(id int64) (leagues map[string][]League, e *FetchError) {
 	method := fmt.Sprintf("league/by-summoner/%d/entry", id)
 	e = lf.makeRequest(lf.makeUrl(leagueVersion, method), &leagues)
 	return
@@ -148,25 +156,25 @@ func (lf *LolFetcher) GetSummonerLeaguesAsync(id int64, resp chan ApiAsyncRespon
 	resp <- val
 }
 
-func (lf *LolFetcher) GetSummonerTeams(id int64, get RemoteGet) (teams map[string][]Team, e error) {
+func (lf *LolFetcher) GetSummonerTeams(id int64, get RemoteGet) (teams map[string][]Team, e *FetchError) {
 	method := fmt.Sprintf("team/by-summoner/%d", id)
 	e = lf.makeRequest(lf.makeUrl(teamVersion, method), &teams)
 	return
 }
 
-func (lf *LolFetcher) GetAllChampions() (champs ChampionList, e error) {
+func (lf *LolFetcher) GetAllChampions() (champs ChampionList, e *FetchError) {
 	params := "&champData=all"
 	e = lf.makeRequest(lf.makeStaticDataUrl(staticVersion, "champion", params), &champs)
 	return
 }
 
-func (lf *LolFetcher) GetAllItems() (items ItemList, e error) {
+func (lf *LolFetcher) GetAllItems() (items ItemList, e *FetchError) {
 	params := "&itemListData=all"
 	e = lf.makeRequest(lf.makeStaticDataUrl(staticVersion, "item", params), &items)
 	return
 }
 
-func (lf *LolFetcher) GetChampion(id int64) (champ Champion, e error) {
+func (lf *LolFetcher) GetChampion(id int64) (champ Champion, e *FetchError) {
 	if id <= 0 {
 		champ.Name = "Total"
 		return
@@ -177,7 +185,7 @@ func (lf *LolFetcher) GetChampion(id int64) (champ Champion, e error) {
 	return
 }
 
-func (lf *LolFetcher) GetRecentMatches(id int64) (r RecentGames, e error) {
+func (lf *LolFetcher) GetRecentMatches(id int64) (r RecentGames, e *FetchError) {
 	method := fmt.Sprintf("game/by-summoner/%d/recent", id)
 	e = lf.makeRequest(lf.makeUrl(gameVersion, method), &r)
 	return

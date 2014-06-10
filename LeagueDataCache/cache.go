@@ -84,7 +84,7 @@ func putCache(resp Response) {
 					if _, ok := gamesBySummoner[matches.SummonerId]; !ok {
 						gamesBySummoner[matches.SummonerId] = []lapi.Game{}
 					}
-					gamesBySummoner[matches.SummonerId] = append([]lapi.Game{match}, gamesBySummoner[matches.SummonerId]...)
+					gamesBySummoner[matches.SummonerId] = append(gamesBySummoner[matches.SummonerId], match)
 				}
 				// Always re-cache here for updated match time.
 				allGames[key] = match

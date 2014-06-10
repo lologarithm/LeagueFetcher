@@ -202,7 +202,7 @@ func returnEmptyJson(w http.ResponseWriter) {
 
 func returnErrJson(e error, w http.ResponseWriter, context appengine.Context) {
 	msg := fmt.Sprintf("{\"error\": \"%s\"}", e.Error())
-	context.Infof("Returning Error: %s", e.Error())
+	context.Infof("Returning Error: %s", msg)
 	w.Write([]byte(msg))
 }
 

@@ -13,7 +13,7 @@ define(['jquery', 'react', 'moment', 'js/stores/summonerStore.js'], function ($,
 			});
 
 			var html = bluePlayers.map($.proxy(function (a, index) {
-				return <tr>
+				return 	<tr>
 							<td className="padding-right-xl padding-left-m" style={{'background-color':'#8cd6f4', 'font-weight':(this.props.name === bluePlayers[index].SummonerName ? 'bold':'normal')}}>
 								<a href="#" onClick={this.onClick(bluePlayers[index].SummonerName)}>{bluePlayers[index].SummonerName}</a>
 							</td>
@@ -30,8 +30,9 @@ define(['jquery', 'react', 'moment', 'js/stores/summonerStore.js'], function ($,
 						<div className='padding-m'>
 							<table>
 								<thead>
-									{html}
+									<td><span>Gold Earned:{this.props.data.Stats.GoldEarned || 0}, Minions Killed:{this.props.data.Stats.MinionsKilled || 0}</span></td>
 								</thead>
+								{html}
 							</table>
 						</div>);
 		},

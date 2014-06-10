@@ -38,7 +38,7 @@ define(['/js/settings.js', '/js/api/matchAPI.js', '/js/mockServer/mockMatchAPI.j
 				}, this))
 			}
 
-			return matches[id] || { GameId: 0, FellowPlayers: [] };
+			return matches[id] || { GameId: 0, FellowPlayers: [], Stats: {} };
 		},
 	}
 

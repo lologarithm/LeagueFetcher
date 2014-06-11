@@ -146,8 +146,11 @@ func (mp *MemcachePersistance) GetMatchesByIndex(index int64) ([]lapi.Game, erro
 			mp.Context.Warningf("Stored Json Failed: %s", mErr.Error())
 			return nil, mErr
 		}
-		mp.Context.Infof("Cache Date: %s  CreateDate: %s\n", time.Unix(0, co.CachedDate).String(), time.Unix(game.CreateDate/1000, 0).String())
+		//mp.Context.Infof("Cache Date: %s  CreateDate: %s\n", time.Unix(0, co.CachedDate).String(), time.Unix(game.CreateDate/1000, 0).String())
 		games = append(games, game)
+	}
+	if len(games) == 0 {
+		return games, errors.New("All games expired.")
 	}
 	return games, nil
 }

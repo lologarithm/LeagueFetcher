@@ -80,11 +80,16 @@ func GetSummonerMatchesSimple(id int64, get chan Request, put chan Response, c a
 	// 1. Try to fetch from local cache
 	value, getErr := goGet(Request{Type: "games", Key: id}, get)
 	if getErr != nil {
-		// Now try to get from persistance (db)
 		c.Infof("Failed to get from local cache. Checking persistance.")
-		gameList, persistErr := persist.GetMatchesByIndex(id)
 		games := lapi.RecentGames{SummonerId: id, Games: []lapi.Game{}}
-		if persistErr != nil || len(games.Games) < 10 {
+		// Now try to get from persistance (db)
+		gameList, persistErr := persist.GetMatchesByIndex(id)
+		shouldPersist := false
+		if persistErr != nil {
+			shouldPersist = true
+			if persistErr != nil {
+				c.Warningf("FETCH FROM PERSIST FAILED: %s", persistErr)
+			}
 			client := getClient(c)
 			api := &lapi.LolFetcher{Get: client.Get, Log: c}
 			// I guess now we try to fetch from lapi
@@ -109,7 +114,7 @@ func GetSummonerMatchesSimple(id int64, get chan Request, put chan Response, c a
 			// Now convert to our local simple game format.
 			matches, fErr := convertGamesToMatchHistory(id, games.Games)
 			// Cache in 'persistance' if there was a persist error
-			if persistErr != nil {
+			if shouldPersist {
 				c.Infof("Matches not stored in persistance. Storing")
 				persistGames(games, id, persist)
 			}

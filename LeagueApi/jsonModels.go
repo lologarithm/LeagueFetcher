@@ -620,5 +620,5 @@ type ErrorStatus struct {
 
 type StatusMessage struct {
 	Message    string
-	StatusCode int64 `json:"status_code"`
+	StatusCode int `json:"status_code"`
 }

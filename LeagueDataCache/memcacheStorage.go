@@ -130,7 +130,7 @@ func (mp *MemcachePersistance) GetMatchesByIndex(index int64) ([]lapi.Game, erro
 	games := []lapi.Game{}
 	query := datastore.NewQuery("Match").Filter("IntIndex =", index).Order("CachedDate").Limit(10)
 	var cachedGames []cachedObject
-	_, err := query.GetAll(mp.Context, &games)
+	_, err := query.GetAll(mp.Context, &cachedGames)
 	if err != nil {
 		return nil, err
 	} else if len(cachedGames) == 0 {
@@ -146,6 +146,7 @@ func (mp *MemcachePersistance) GetMatchesByIndex(index int64) ([]lapi.Game, erro
 			mp.Context.Warningf("Stored Json Failed: %s", mErr.Error())
 			return nil, mErr
 		}
+		mp.Context.Infof("Cache Date: %s  CreateDate: %s\n", time.Unix(0, co.CachedDate).String(), time.Unix(game.CreateDate/1000, 0).String())
 		games = append(games, game)
 	}
 	return games, nil

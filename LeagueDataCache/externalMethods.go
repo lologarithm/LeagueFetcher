@@ -53,7 +53,7 @@ func GetSummoner(name string, get chan Request, put chan Response, c appengine.C
 			}
 			if s, gotOk := summoners[name]; gotOk {
 				// Cache value before returning.
-				goPut(s, "summoner", put, c)
+				goPut(s, "summoner", put)
 				fail := persist.PutSummoner(s)
 				if fail != nil {
 					c.Warningf("Failed to store summoner: %s", fail.Error())
@@ -64,7 +64,7 @@ func GetSummoner(name string, get chan Request, put chan Response, c appengine.C
 			}
 		} else {
 			// Locally Cache
-			goPut(*sRef, "summoner", put, c)
+			goPut(*sRef, "summoner", put)
 			// Return value
 			return *sRef, nil
 		}
@@ -81,6 +81,7 @@ func GetSummonerMatchesSimple(id int64, get chan Request, put chan Response, c a
 	value, getErr := goGet(Request{Type: "games", Key: id}, get)
 	if getErr != nil {
 		// Now try to get from persistance (db)
+		c.Infof("Failed to get from local cache. Checking persistance.")
 		gameList, persistErr := persist.GetMatchesByIndex(id)
 		games := lapi.RecentGames{SummonerId: id, Games: []lapi.Game{}}
 		if persistErr != nil || len(games.Games) < 10 {
@@ -89,6 +90,10 @@ func GetSummonerMatchesSimple(id int64, get chan Request, put chan Response, c a
 			// I guess now we try to fetch from lapi
 			gotGames, fetchErr := api.GetRecentMatches(id)
 			if fetchErr != nil {
+				// Don't return a 404 as an error. It means we found nothing
+				if fetchErr.Code != 404 {
+					return MatchHistory{}, nil
+				}
 				// Return err if we were unable to get from lapi
 				return MatchHistory{}, fetchErr
 			}
@@ -98,7 +103,7 @@ func GetSummonerMatchesSimple(id int64, get chan Request, put chan Response, c a
 		}
 		// Recache locally
 		c.Infof("Matches not stored in local cache. Storing")
-		goPut(games, "games", put, c)
+		goPut(games, "games", put)
 		// Now we need convert.
 		if len(games.Games) > 0 {
 			// Now convert to our local simple game format.
@@ -148,11 +153,10 @@ func GetMatch(matchId int64, summonerId int64, get chan Request, put chan Respon
 	}
 
 	if len(missingIds) > 0 {
-		// TODO: FETCH FROM DB PERSISTANCE FIRST.
 		// First check local db.
 		pSummoners, dbErr := persist.GetSummoners(missingIds)
 		for _, value := range pSummoners {
-			goPut(value, "summoner", put, c)
+			goPut(value, "summoner", put)
 			// Put the name into the list
 			for i := 0; i < len(game.FellowPlayers); i++ {
 				p := game.FellowPlayers[i]
@@ -203,11 +207,22 @@ func CacheMatch(matchId int64, summonerId int64, get chan Request, put chan Resp
 	mKey := MatchKey{MatchId: matchId, SummonerId: summonerId}
 	c.Infof("Fetching details of: %v to cache other summoners.", mKey)
 	value, getErr := goGet(Request{Type: "game", Key: mKey}, get)
+	var game MatchDetail
 	if getErr != nil {
-		c.Infof("Failed to find game in local cache?")
-		return
+		var persistGame *lapi.Game
+		persistErr := persist.GetObject("Match", mKey.String(), &persistGame)
+		if persistErr != nil {
+			// Couldn't find game to cache
+			return
+		}
+		gameDetail, fErr := convertGameToMatchDetail(*persistGame)
+		if fErr == nil {
+			game = gameDetail
+		}
+	} else {
+		game, _ = value.(MatchDetail)
 	}
-	game, _ := value.(MatchDetail)
+
 	missingIds := []int64{}
 	for _, p := range game.FellowPlayers {
 		if p.SummonerName == "" {
@@ -221,7 +236,7 @@ func CacheMatch(matchId int64, summonerId int64, get chan Request, put chan Resp
 		// First check local db.
 		pSummoners, dbErr := persist.GetSummoners(missingIds)
 		for _, value := range pSummoners {
-			goPut(value, "summoner", put, c)
+			goPut(value, "summoner", put)
 			for index, id := range missingIds {
 				if id == value.Id {
 					// Remove the ID from the list of missing.
@@ -238,7 +253,7 @@ func CacheMatch(matchId int64, summonerId int64, get chan Request, put chan Resp
 			}
 			for _, value := range aSummoners {
 				persist.PutSummoner(value)
-				goPut(value, "summoner", put, c)
+				goPut(value, "summoner", put)
 			}
 		}
 	}
@@ -294,7 +309,10 @@ func GetSummonerRankedData(s lapi.Summoner, get chan Request, put chan Response,
 			select {
 			case statsAsync := <-getStats:
 				if statsAsync.Error != nil {
-					return srd, statsAsync.Error
+					if statsAsync.Error.Code != 404 {
+						c.Infof("Error: %s", statsAsync.Error.Error())
+						return srd, statsAsync.Error
+					}
 				}
 				if stats, ok := statsAsync.Value.(lapi.RankedStats); ok {
 					for index, stat := range stats.Champions {
@@ -310,13 +328,17 @@ func GetSummonerRankedData(s lapi.Summoner, get chan Request, put chan Response,
 				}
 				// If we have both pieeces, return!
 				if responses == 1 {
-					goPut(srd, "rankedData", put, c)
+					goPut(srd, "rankedData", put)
 					return srd, nil
 				}
 				responses += 1
 			case leaguesAsync := <-getLeagues:
-				if leaguesAsync.Error != nil && leaguesAsync.Error.Error() == "Rate Limit Exceeded." {
-					return srd, leaguesAsync.Error
+				if leaguesAsync.Error != nil {
+					// Don't return a 404 as an error. It means we found nothing
+					if leaguesAsync.Error.Code != 404 {
+						c.Infof("Error: %s", leaguesAsync.Error.Error())
+						return srd, leaguesAsync.Error
+					}
 				}
 				if leagues, ok := leaguesAsync.Value.(map[string][]lapi.League); ok {
 					for _, league := range leagues[strconv.FormatInt(s.Id, 10)] {
@@ -335,7 +357,7 @@ func GetSummonerRankedData(s lapi.Summoner, get chan Request, put chan Response,
 				}
 				// If we have both pieeces, return!
 				if responses == 1 {
-					goPut(srd, "rankedData", put, c)
+					goPut(srd, "rankedData", put)
 					return srd, nil
 				}
 				responses += 1
@@ -365,7 +387,7 @@ func goGet(request Request, get chan Request) (interface{}, error) {
 }
 
 // Generic function to cache a value
-func goPut(value interface{}, valType string, put chan Response, c appengine.Context) {
+func goPut(value interface{}, valType string, put chan Response) {
 	r := Response{Value: value, Type: valType}
 	put <- r
 }

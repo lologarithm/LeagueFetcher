@@ -77,14 +77,14 @@ func putCache(resp Response) {
 	case "games":
 		if matches, ok := resp.Value.(lapi.RecentGames); ok {
 			for _, match := range matches.Games {
-				match.ExpireTime = getExpireTime()
+				match.ExpireTime = getExpireTime(false)
 				key := MatchKey{MatchId: match.GameId, SummonerId: matches.SummonerId}
 				// Don't put the match into the list of games for the summoner if it's already cached.
 				if _, ok := allGames[key]; !ok {
 					if _, ok := gamesBySummoner[matches.SummonerId]; !ok {
 						gamesBySummoner[matches.SummonerId] = []lapi.Game{}
 					}
-					gamesBySummoner[matches.SummonerId] = append([]lapi.Game{match}, gamesBySummoner[matches.SummonerId]...)
+					gamesBySummoner[matches.SummonerId] = append(gamesBySummoner[matches.SummonerId], match)
 				}
 				// Always re-cache here for updated match time.
 				allGames[key] = match
@@ -100,7 +100,7 @@ func putCache(resp Response) {
 		}
 	case "rankedData":
 		if data, ok := resp.Value.(SummonerRankedData); ok {
-			data.ExpireTime = getExpireTime()
+			data.ExpireTime = getExpireTime(false)
 			allRankedData[data.Id] = data
 		}
 	}

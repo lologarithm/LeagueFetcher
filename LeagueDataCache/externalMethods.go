@@ -83,7 +83,7 @@ func GetSummonerMatchesSimple(id int64, get chan Request, put chan Response, c a
 		// Now try to get from persistance (db)
 		gameList, persistErr := persist.GetMatchesByIndex(id)
 		games := lapi.RecentGames{SummonerId: id, Games: []lapi.Game{}}
-		if persistErr != nil {
+		if persistErr != nil || len(games.Games) < 10 {
 			client := getClient(c)
 			api := &lapi.LolFetcher{Get: client.Get, Log: c}
 			// I guess now we try to fetch from lapi

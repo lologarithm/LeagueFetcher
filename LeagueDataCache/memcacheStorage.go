@@ -84,7 +84,7 @@ func (mp *MemcachePersistance) PutObject(objType string, keyName string, index i
 		return marshErr
 	}
 	key := datastore.NewKey(mp.Context, objType, keyName, 0, nil)
-	_, err := datastore.Put(mp.Context, key, &cachedObject{Data: jsonData, IntIndex: index, CachedDate: time.Now().Unix()})
+	_, err := datastore.Put(mp.Context, key, &cachedObject{Data: jsonData, IntIndex: index, CachedDate: getExpireTime(true)})
 	if err != nil {
 		mp.Context.Warningf("Failed to store object: %s", err.Error())
 		return err
@@ -100,7 +100,7 @@ func (mp *MemcachePersistance) PutObjects(objType string, keys []string, indexes
 		if marshErr != nil {
 			return marshErr
 		}
-		cacheThings[ind] = &cachedObject{Data: jsonData, IntIndex: indexes[ind], CachedDate: time.Now().Unix()}
+		cacheThings[ind] = &cachedObject{Data: jsonData, IntIndex: indexes[ind], CachedDate: getExpireTime(true)}
 		dsKeys[ind] = datastore.NewKey(mp.Context, objType, keys[ind], 0, nil)
 	}
 
@@ -137,6 +137,9 @@ func (mp *MemcachePersistance) GetMatchesByIndex(index int64) ([]lapi.Game, erro
 		return nil, errors.New("No games found.")
 	}
 	for _, co := range cachedGames {
+		if co.CachedDate < time.Now().UnixNano() {
+			continue
+		}
 		var game lapi.Game
 		mErr := json.Unmarshal(co.Data, &game)
 		if mErr != nil {

@@ -199,7 +199,10 @@ func (c CacheError) Error() string {
 	return c.message
 }
 
-func getExpireTime() int64 {
+func getExpireTime(inNano bool) int64 {
+	if inNano {
+		return (time.Now().Add(time.Minute * cacheTimeoutMinutes)).UnixNano()
+	}
 	return (time.Now().Add(time.Minute * cacheTimeoutMinutes)).Unix()
 }
 

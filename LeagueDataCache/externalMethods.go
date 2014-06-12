@@ -32,6 +32,22 @@ func GetChampion(id int64, get chan Request, c appengine.Context) (lapi.Champion
 	return lapi.Champion{}, CacheError{message: "Failed to retrieve champion."}
 }
 
+// Fetch Item from cache goroutine.
+func GetItem(id int64, get chan Request, put chan Response, c appengine.Context) (lapi.Item, error) {
+	if id <= 0 {
+		// Return empty champion if there is no champion.
+		return lapi.Item{}, nil
+	}
+	itemResponse, fErr := goGet(Request{Type: "item", Key: id}, get)
+	if fErr != nil {
+		// TODO: Fetch item from LAPI and cache
+		return lapi.Item{}, CacheError{message: "Failed to retrieve item."}
+	}
+	item, _ := itemResponse.(lapi.Item)
+	return item, nil
+
+}
+
 // Fetch Summoner from cache goroutine
 func GetSummoner(name string, get chan Request, put chan Response, c appengine.Context, persist PersistanceProvider) (lapi.Summoner, error) {
 	name = NormalizeString(name)

@@ -18,6 +18,7 @@ define(['jquery', 'react', 'moment', 'js/stores/summonerStore.js'], function ($,
 							<span>Date Played: { moment(this.props.data.CreateDate).format('MMMM Do YYYY, h:mm a') }</span>
 							<span style={{'display':'inline-block', 'float':'right'}}>KDA: {kda}</span>
 						</div>
+						<div>Game Type: { this.props.data.GameType + " " + this.props.data.SubType }</div>
 						<div>Game Mode: { this.props.data.GameMode }</div>
 						<div>IP Earned: { this.props.data.IpEarned }</div>
 					</div>);

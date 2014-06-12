@@ -121,8 +121,14 @@ type MatchDetail struct {
 	Spell1        int           // ID of first summoner spell.
 	Spell2        int           // ID of second summoner spell.
 	Stats         lapi.RawStats // Statistics associated with the game for this summoner.
-	SubType       string        // Game sub-type. (legal values: NONE, NORMAL, BOT, RANKED_SOLO_5x5, RANKED_PREMADE_3x3, RANKED_PREMADE_5x5, ODIN_UNRANKED, RANKED_TEAM_3x3, RANKED_TEAM_5x5, NORMAL_3x3, BOT_3x3, CAP_5x5, ARAM_UNRANKED_5x5, ONEFORALL_5x5, FIRSTBLOOD_1x1, FIRSTBLOOD_2x2, SR_6x6, URF, URF_BOT)
-	Side          string        // blue or purple
+	Items         []ItemDetail
+	SubType       string // Game sub-type. (legal values: NONE, NORMAL, BOT, RANKED_SOLO_5x5, RANKED_PREMADE_3x3, RANKED_PREMADE_5x5, ODIN_UNRANKED, RANKED_TEAM_3x3, RANKED_TEAM_5x5, NORMAL_3x3, BOT_3x3, CAP_5x5, ARAM_UNRANKED_5x5, ONEFORALL_5x5, FIRSTBLOOD_1x1, FIRSTBLOOD_2x2, SR_6x6, URF, URF_BOT)
+	Side          string // blue or purple
+}
+
+type ItemDetail struct {
+	Name     string
+	ImageUrl string
 }
 
 type Player struct {

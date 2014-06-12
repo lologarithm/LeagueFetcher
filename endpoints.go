@@ -52,9 +52,16 @@ func init() {
 	//	http.HandleFunc("/rankedStats", func(w http.ResponseWriter, req *http.Request) { handleRankedStats(w, req, cacheGet, cachePut) })
 
 	// JSON data api
+
+	// Static Data
 	http.HandleFunc("/api/champion", func(w http.ResponseWriter, req *http.Request) {
 		timeEndpoint(handleChampion, w, req, cacheGet, cachePut)
 	})
+	http.HandleFunc("/api/item", func(w http.ResponseWriter, req *http.Request) {
+		timeEndpoint(handleItem, w, req, cacheGet, cachePut)
+	})
+
+	// Dynamic Data
 	http.HandleFunc("/api/summoner/matchHistory", func(w http.ResponseWriter, req *http.Request) {
 		timeEndpoint(handleRecentMatches, w, req, cacheGet, cachePut)
 	})
@@ -146,6 +153,22 @@ func handleChampion(w http.ResponseWriter, r *http.Request, cacheGet chan lolCac
 		return
 	}
 	writeJson(w, champ, c)
+}
+
+func handleItem(w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {
+	c := appengine.NewContext(r)
+	itemId, parseErr := strconv.ParseInt(r.FormValue("id"), 10, 64)
+	if parseErr != nil {
+		returnEmptyJson(w)
+		return
+	}
+
+	item, fetchErr := lolCache.GetItem(itemId, cacheGet, cachePut, c)
+	if fetchErr != nil {
+		returnErrJson(fetchErr, w, c)
+		return
+	}
+	writeJson(w, item, c)
 }
 
 func handleRankedData(w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {

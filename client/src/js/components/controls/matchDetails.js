@@ -30,9 +30,14 @@ define(['jquery', 'react', 'moment', 'js/stores/summonerStore.js'], function ($,
 						<div className='padding-m'>
 							<table>
 								<thead>
-									<td><span>Gold Earned:{this.props.data.Stats.GoldEarned || 0}, Minions Killed:{this.props.data.Stats.MinionsKilled || 0}</span></td>
+									<td><span>Gold Earned:{this.props.data.Stats.GoldEarned || 0}</span></td><td><span>Minions Killed:{this.props.data.Stats.MinionsKilled || 0}</span></td>
 								</thead>
 								{html}
+								<tr>
+									<td><span>Items:</span></td>
+								</tr><tr>
+									<td></td>
+								</tr>
 							</table>
 						</div>);
 		},

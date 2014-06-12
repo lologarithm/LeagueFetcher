@@ -10,6 +10,7 @@ import (
 const (
 	championCache       = "ccache.json"
 	summonerCache       = "scache.json"
+	itemCache           = "icache.json"
 	cacheTimeoutMinutes = 30
 )
 
@@ -50,6 +51,7 @@ var allTeams map[int64]lapi.Team
 var allGames map[MatchKey]lapi.Game
 var gamesBySummoner map[int64][]lapi.Game
 var allRankedData map[int64]SummonerRankedData
+var allItems *lapi.ItemList
 
 // RunCache is the primary method. Start this as a goroutine and then use other public methods to fetch from this.
 func RunCache(exit chan bool, get chan Request, put chan Response) {
@@ -124,6 +126,13 @@ func fetchCache(request Request) {
 				response.Ok = true
 			}
 		}
+	case "item":
+		if intKey, ok := request.Key.(int64); ok {
+			if item, ok := allItems.ItemsById[intKey]; ok {
+				response.Value = item
+				response.Ok = true
+			}
+		}
 	case "games":
 		if intKey, ok := request.Key.(int64); ok {
 			// If last fetch of game history is old, refetch game history.
@@ -174,7 +183,9 @@ func cacheSummoner(summoner lapi.Summoner) {
 
 func SetupCache() {
 	loadChampions(championCache)
+	loadItems(itemCache)
 	loadSummoners(summonerCache)
+
 	if allGames == nil {
 		allGames = make(map[MatchKey]lapi.Game)
 	}

@@ -46,6 +46,29 @@ func loadChampions(file string) {
 	}
 }
 
+func loadItems(file string) {
+	if allItems != nil {
+		return
+	}
+	if _, err := os.Stat(file); err == nil {
+		iData, readErr := ioutil.ReadFile(file)
+		if readErr != nil {
+			fmt.Printf("Error loading items: %s\n", readErr.Error())
+			return
+		}
+		marshErr := json.Unmarshal(iData, &allItems)
+		if marshErr != nil {
+			fmt.Printf("Error loading items: %s\n", marshErr.Error())
+		}
+	}
+	allItems.ItemsById = make(map[int64]lapi.Item, len(allItems.Data))
+	if allItems.ItemsById != nil {
+		for _, item := range allItems.Data {
+			allItems.ItemsById[item.Id] = item
+		}
+	}
+}
+
 func fetchAndCacheChampion(id int64, api *lapi.LolFetcher) (lapi.Champion, error) {
 	if allChampions == nil || len(allChampions) == 0 {
 		allChampions = make(map[int64]lapi.Champion, 100)

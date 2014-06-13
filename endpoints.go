@@ -1,18 +1,20 @@
 package main
 
 import (
-	"appengine"
-	"appengine/datastore"
-	"appengine/taskqueue"
 	"encoding/json"
 	"fmt"
-	lapi "github.com/lologarithm/LeagueFetcher/LeagueApi"
-	lolCache "github.com/lologarithm/LeagueFetcher/LeagueDataCache"
 	"html"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
+
+	lapi "github.com/lologarithm/LeagueFetcher/LeagueApi"
+	lolCache "github.com/lologarithm/LeagueFetcher/LeagueDataCache"
+
+	"appengine"
+	"appengine/datastore"
+	"appengine/taskqueue"
 )
 
 type ServerConfig struct {
@@ -74,11 +76,13 @@ func init() {
 	http.HandleFunc("/task/cacheGames", func(w http.ResponseWriter, req *http.Request) {
 		timeEndpoint(handleGameCache, w, req, cacheGet, cachePut)
 	})
+	http.HandleFunc("/task/calcStats", func(w http.ResponseWriter, req *http.Request) {
+		timeEndpoint(handleCalcStats, w, req, cacheGet, cachePut)
+	})
 
 	http.HandleFunc("/clean", func(w http.ResponseWriter, req *http.Request) {
 		timeEndpoint(cleanDatastore, w, req, cacheGet, cachePut)
 	})
-
 	http.HandleFunc("/log", handleLog)
 }
 
@@ -201,6 +205,16 @@ func handleGameCache(w http.ResponseWriter, r *http.Request, cacheGet chan lolCa
 	}
 
 	lolCache.CacheMatch(matchId, summonerId, cacheGet, cachePut, c, &lolCache.MemcachePersistance{Context: c})
+}
+
+func handleCalcStats(w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {
+	c := appengine.NewContext(r)
+	summonerId, intErr := strconv.ParseInt(r.FormValue("summonerId"), 10, 64)
+	if intErr != nil {
+		returnErrJson(intErr, w, c)
+		return
+	}
+
 }
 
 func cleanDatastore(w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {

@@ -3,10 +3,11 @@ package LeagueDataCache
 import (
 	"encoding/json"
 	"fmt"
-	lapi "github.com/lologarithm/LeagueFetcher/LeagueApi"
 	"io/ioutil"
 	"os"
 	"strconv"
+
+	lapi "github.com/lologarithm/LeagueFetcher/LeagueApi"
 )
 
 func storeChampions(file string) {
@@ -59,7 +60,10 @@ func loadItems(file string) {
 		marshErr := json.Unmarshal(iData, &allItems)
 		if marshErr != nil {
 			fmt.Printf("Error loading items: %s\n", marshErr.Error())
+			return
 		}
+	} else {
+		return
 	}
 	allItems.ItemsById = make(map[int64]lapi.Item, len(allItems.Data))
 	if allItems.ItemsById != nil {

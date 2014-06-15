@@ -1,10 +1,12 @@
 package LeagueDataCache
 
 import (
-	"appengine/aetest"
 	"errors"
-	lapi "github.com/lologarithm/LeagueFetcher/LeagueApi"
 	"testing"
+
+	lapi "github.com/lologarithm/LeagueFetcher/LeagueApi"
+
+	"appengine/aetest"
 )
 
 func TestPutSummonerCache(t *testing.T) {
@@ -51,16 +53,16 @@ func TestFetchSummonerCache(t *testing.T) {
 
 func TestPutGamesCache(t *testing.T) {
 	// Setup Test
-	allGames = make(map[MatchKey]lapi.Game)
-	gamesBySummoner = make(map[int64][]lapi.Game)
+	allGames = make(map[MatchKey]cachedMatchDetail)
+	gamesBySummoner = make(map[int64][]cachedMatchDetail)
 	// Build Data
 	gameList := []lapi.Game{lapi.Game{ChampionId: int64(10), GameId: int64(3), Stats: lapi.RawStats{}}, lapi.Game{ChampionId: int64(11), GameId: int64(4), Stats: lapi.RawStats{}}}
 	games := lapi.RecentGames{SummonerId: int64(1), Games: gameList}
 	testResp := Response{Type: "games", Value: games}
 	putCache(testResp)
 	// Assert
-	if value, ok := allGames[MatchKey{SummonerId: int64(1), MatchId: int64(3)}]; ok {
-		if value.ChampionId != int64(10) {
+	if cg, ok := allGames[MatchKey{SummonerId: int64(1), MatchId: int64(3)}]; ok {
+		if cg.GameId != int64(3) {
 			t.FailNow()
 		}
 	} else {
@@ -129,7 +131,7 @@ func TestExternalGetSimpleMatches(t *testing.T) {
 		t.Errorf("Couldn't find match: %s", testKey)
 		t.FailNow()
 	} else {
-		t.Logf("Found Match: %v\n", value)
+		t.Logf("Found Match: %v\n", string(value.Data))
 	}
 }
 
@@ -147,13 +149,6 @@ func TestCacheExpire(t *testing.T) {
 type MockPersist struct {
 }
 
-func (mp *MockPersist) PutObject(objType string, id string, i int64, thing interface{}) error {
-	return errors.New("Failed to get!")
-}
-
-func (mp *MockPersist) GetObject(objType string, id string, thing interface{}) error {
-	return errors.New("Failed to get!")
-}
 func (mp *MockPersist) PutSummoner(s lapi.Summoner) error {
 	return errors.New("Failed!")
 }
@@ -166,12 +161,20 @@ func (mp *MockPersist) GetSummonerByName(s *lapi.Summoner) error {
 func (mp *MockPersist) GetSummoners(s []int64) ([]lapi.Summoner, error) {
 	return nil, errors.New("Failed!")
 }
-func (mp *MockPersist) PutObjects(s string, a []string, b []int64, i []interface{}) error {
+func (mp *MockPersist) GetMatchDetail(a MatchKey, b *MatchDetail) error {
+	return errors.New("Failed!")
+}
+func (mp *MockPersist) PutMatchDetail(a MatchKey, b MatchDetail) error {
 	return errors.New("Failed!")
 }
 
-func (mp *MockPersist) GetMatchesByIndex(int64) ([]lapi.Game, error) {
-	gameList := []lapi.Game{lapi.Game{ChampionId: int64(10), GameId: int64(3), Stats: lapi.RawStats{}}, lapi.Game{ChampionId: int64(11), GameId: int64(4), Stats: lapi.RawStats{}}}
-	//games := lapi.RecentGames{SummonerId: int64(1), Games: gameList}
-	return gameList, nil
+func (mp *MockPersist) PutMatchDetails(a int64, b []MatchDetail) error {
+	return errors.New("Failed!")
+}
+func (mp *MockPersist) GetMatchHistory(a int64) (MatchHistory, error) {
+	return MatchHistory{}, errors.New("Failed!")
+}
+
+func (mp *MockPersist) GetMatchDetails(int64) ([]MatchDetail, error) {
+	return []MatchDetail{}, nil
 }

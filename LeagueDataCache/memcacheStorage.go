@@ -1,22 +1,18 @@
 package LeagueDataCache
 
 import (
-	"appengine"
-	"appengine/datastore"
 	"encoding/json"
 	"errors"
-	lapi "github.com/lologarithm/LeagueFetcher/LeagueApi"
 	"time"
+
+	lapi "github.com/lologarithm/LeagueFetcher/LeagueApi"
+
+	"appengine"
+	"appengine/datastore"
 )
 
 type MemcachePersistance struct {
 	Context appengine.Context
-}
-
-type cachedObject struct {
-	Data       []byte
-	IntIndex   int64 // Matches this is the summoner id, Summoners this is id
-	CachedDate int64 // Lets you check within a certain date.
 }
 
 func (mp *MemcachePersistance) PutSummoner(s lapi.Summoner) error {
@@ -78,95 +74,82 @@ func (mp *MemcachePersistance) GetSummonerByName(s *lapi.Summoner) error {
 	return nil
 }
 
-func (mp *MemcachePersistance) PutObject(objType string, keyName string, index int64, thing interface{}) error {
-	jsonData, marshErr := json.Marshal(thing)
-	if marshErr != nil {
-		return marshErr
-	}
-	key := datastore.NewKey(mp.Context, objType, keyName, 0, nil)
-	_, err := datastore.Put(mp.Context, key, &cachedObject{Data: jsonData, IntIndex: index, CachedDate: getExpireTime(true)})
+func (mp *MemcachePersistance) PutMatchDetail(mKey MatchKey, md MatchDetail) error {
+	cacheMatch := md.toCachedMatch(mKey.SummonerId)
+	dKey := datastore.NewKey(mp.Context, "TMatch", mKey.String(), 0, nil)
+	_, err := datastore.Put(mp.Context, dKey, &cacheMatch)
 	if err != nil {
-		mp.Context.Warningf("Failed to store object: %s", err.Error())
 		return err
 	}
 	return nil
 }
 
-func (mp *MemcachePersistance) PutObjects(objType string, keys []string, indexes []int64, things []interface{}) error {
-	cacheThings := make([]*cachedObject, len(things))
-	dsKeys := make([]*datastore.Key, len(keys))
-	for ind, t := range things {
-		jsonData, marshErr := json.Marshal(t)
-		if marshErr != nil {
-			return marshErr
-		}
-		cacheThings[ind] = &cachedObject{Data: jsonData, IntIndex: indexes[ind], CachedDate: getExpireTime(true)}
-		dsKeys[ind] = datastore.NewKey(mp.Context, objType, keys[ind], 0, nil)
+func (mp *MemcachePersistance) GetMatchDetail(mKey MatchKey, md *MatchDetail) error {
+	dKey := datastore.NewKey(mp.Context, "TMatch", mKey.String(), 0, nil)
+	var cm cachedMatchDetail
+	err := datastore.Get(mp.Context, dKey, &cm)
+	if err != nil {
+		return err
+	}
+	e := json.Unmarshal(cm.Data, md)
+	if e != nil {
+		mp.Context.Warningf("Failed to unmarshal JSON of MatchDetail: %s.\n", e.Error())
+	}
+	return e
+}
+
+func (mp *MemcachePersistance) PutMatchDetails(summonerId int64, matches []MatchDetail) error {
+	cachedMatches := make([]cachedMatchDetail, len(matches))
+	cacheKeys := make([]*datastore.Key, len(matches))
+	for ind, match := range matches {
+		cachedMatches[ind] = match.toCachedMatch(summonerId)
+		cacheKeys[ind] = datastore.NewKey(mp.Context, "TMatch", cachedMatches[ind].KeyString(), 0, nil)
 	}
 
-	_, dsErr := datastore.PutMulti(mp.Context, dsKeys, cacheThings)
-	if dsErr != nil {
-		mp.Context.Warningf("Failed to store multi objects %s: %s", objType)
+	_, err := datastore.PutMulti(mp.Context, cacheKeys, cachedMatches)
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
-func (mp *MemcachePersistance) GetObject(objType string, id string, thing interface{}) error {
-	var co cachedObject
-	getErr := datastore.Get(mp.Context, datastore.NewKey(mp.Context, objType, id, 0, nil), &co)
-	if getErr != nil {
-		mp.Context.Warningf("Get Failed: %s", getErr.Error())
-		return getErr
-	}
-	mErr := json.Unmarshal(co.Data, thing)
-	if mErr != nil {
-		mp.Context.Warningf("Stored Json Failed: %s", mErr.Error())
-		return mErr
-	}
-	return nil
-}
-
-func (mp *MemcachePersistance) GetMatchesByIndex(index int64) ([]lapi.Game, error) {
-	games := []lapi.Game{}
-	query := datastore.NewQuery("Match").Filter("IntIndex =", index).Order("CachedDate").Limit(10)
-	var cachedGames []cachedObject
+func (mp *MemcachePersistance) getCachedMatches(id int64) ([]cachedMatchDetail, error) {
+	query := datastore.NewQuery("TMatch").Filter("SummonerId =", id).Order("-PlayedDate").Limit(10)
+	var cachedGames []cachedMatchDetail
 	_, err := query.GetAll(mp.Context, &cachedGames)
 	if err != nil {
 		return nil, err
 	} else if len(cachedGames) == 0 {
 		return nil, errors.New("No games found.")
+	} else if cachedGames[0].CacheExpireDate < time.Now().Unix() {
+		return cachedGames, errors.New("Games cache expired.")
+	}
+
+	return cachedGames, nil
+}
+
+func (mp *MemcachePersistance) GetMatchDetails(id int64) ([]MatchDetail, error) {
+	games := []MatchDetail{}
+	cachedGames, gErr := mp.getCachedMatches(id)
+	if gErr != nil {
+		return games, gErr
 	}
 	for _, co := range cachedGames {
-		if co.CachedDate < time.Now().UnixNano() {
-			continue
+		md, cErr := co.ToMatchDetail()
+		if cErr != nil {
+			mp.Context.Warningf("Stored Json Failed: %s", cErr.Error())
+			return nil, cErr
 		}
-		var game lapi.Game
-		mErr := json.Unmarshal(co.Data, &game)
-		if mErr != nil {
-			mp.Context.Warningf("Stored Json Failed: %s", mErr.Error())
-			return nil, mErr
-		}
-		//mp.Context.Infof("Cache Date: %s  CreateDate: %s\n", time.Unix(0, co.CachedDate).String(), time.Unix(game.CreateDate/1000, 0).String())
-		games = append(games, game)
-	}
-	if len(games) == 0 {
-		return games, errors.New("All games expired.")
+		games = append(games, md)
 	}
 	return games, nil
 }
 
-//func (mp *MemcachePersistance) GetObjectsByIndex(objType string, index int64, thing interface{}) error {
-//	query := datastore.NewQuery("Match").Filter("IntIndex =", index).Order("CachedDate").Limit(10)
-//	var co cachedObject
-//	getErr := datastore.Get(mp.Context, datastore.NewKey(mp.Context, objType, id, 0, nil), &co)
-//	if getErr != nil {
-//		mp.Context.Warningf("Get Failed: %s", getErr.Error())
-//		return getErr
-//	}
-//	mErr := json.Unmarshal(co.Data, thing)
-//	if mErr != nil {
-//		mp.Context.Warningf("Stored Json Failed: %s", mErr.Error())
-//		return mErr
-//	}
-//	return nil
-//}
+func (mp *MemcachePersistance) GetMatchHistory(id int64) (mh MatchHistory, e error) {
+	cachedGames, e := mp.getCachedMatches(id)
+	if e != nil {
+		return
+	}
+	mh, e = convertCachedMatchDetailsToHistory(cachedGames)
+	return
+}

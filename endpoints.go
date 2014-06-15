@@ -14,7 +14,6 @@ import (
 
 	"appengine"
 	"appengine/datastore"
-	"appengine/taskqueue"
 )
 
 type ServerConfig struct {
@@ -110,10 +109,10 @@ func handleRecentMatches(w http.ResponseWriter, r *http.Request, cacheGet chan l
 	matches, fetchErr := lolCache.GetSummonerMatchesSimple(summoner.Id, cacheGet, cachePut, c, &lolCache.MemcachePersistance{Context: c})
 
 	// Now send tasks to start caching all games from other summoner perspecives.ServerConfig
-	for _, match := range matches.Games {
-		t := taskqueue.NewPOSTTask("/task/cacheGames", map[string][]string{"matchId": {strconv.FormatInt(match.GameId, 10)}, "summonerId": {strconv.FormatInt(summoner.Id, 10)}})
-		taskqueue.Add(c, t, "")
-	}
+	//for _, match := range matches.Games {
+	//	t := taskqueue.NewPOSTTask("/task/cacheGames", map[string][]string{"matchId": {strconv.FormatInt(match.GameId, 10)}, "summonerId": {strconv.FormatInt(summoner.Id, 10)}})
+	//	taskqueue.Add(c, t, "")
+	//}
 
 	if fetchErr != nil {
 		returnErrJson(fetchErr, w, c)
@@ -209,12 +208,12 @@ func handleGameCache(w http.ResponseWriter, r *http.Request, cacheGet chan lolCa
 
 func handleCalcStats(w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {
 	c := appengine.NewContext(r)
-	summonerId, intErr := strconv.ParseInt(r.FormValue("summonerId"), 10, 64)
+	_, intErr := strconv.ParseInt(r.FormValue("summonerId"), 10, 64)
 	if intErr != nil {
 		returnErrJson(intErr, w, c)
 		return
 	}
-
+	//lolCache.Get
 }
 
 func cleanDatastore(w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {

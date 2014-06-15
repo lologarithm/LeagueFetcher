@@ -178,6 +178,7 @@ func getMatchFromSomewhere(mKey MatchKey, get chan Request, put chan Response, c
 	}
 
 	if len(missingIds) > 0 {
+		c.Infof("Missing summoner names: %d\n", len(missingIds))
 		// First check persist db.
 		pSummoners, dbErr := persist.GetSummoners(missingIds)
 		for _, value := range pSummoners {
@@ -221,10 +222,14 @@ func getMatchFromSomewhere(mKey MatchKey, get chan Request, put chan Response, c
 						break
 					}
 				}
+				goPut(value, "summoner", put)
+				persist.PutSummoner(value)
 			}
+			c.Infof("Done persisting remaining summoners.")
 		}
 		persist.PutMatchDetail(mKey, game)
 		goPutWithKey(game, mKey, "game", put)
+		c.Infof("Done persisting game data.")
 	}
 
 	return

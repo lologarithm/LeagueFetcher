@@ -69,6 +69,9 @@ func init() {
 	http.HandleFunc("/api/summoner/rankedData", func(w http.ResponseWriter, req *http.Request) {
 		timeEndpoint(handleRankedData, w, req, cacheGet, cachePut)
 	})
+	http.HandleFunc("/api/summoner/LFScores", func(w http.ResponseWriter, req *http.Request) {
+		timeEndpoint(handleGetLFScore, w, req, cacheGet, cachePut)
+	})
 	http.HandleFunc("/api/match", func(w http.ResponseWriter, req *http.Request) {
 		timeEndpoint(handleMatchDetails, w, req, cacheGet, cachePut)
 	})
@@ -206,14 +209,23 @@ func handleGameCache(w http.ResponseWriter, r *http.Request, cacheGet chan lolCa
 	lolCache.CacheMatch(matchId, summonerId, cacheGet, cachePut, c, &lolCache.MemcachePersistance{Context: c})
 }
 
-func handleCalcStats(w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {
+func handleGetLFScore(w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {
 	c := appengine.NewContext(r)
-	_, intErr := strconv.ParseInt(r.FormValue("summonerId"), 10, 64)
+	summonerId, intErr := strconv.ParseInt(r.FormValue("summonerId"), 10, 64)
 	if intErr != nil {
 		returnErrJson(intErr, w, c)
 		return
 	}
-	//lolCache.Get
+
+	scores, fetchErr := lolCache.GetLFScores(summonerId, cacheGet, cachePut, c, &lolCache.MemcachePersistance{Context: c})
+	if fetchErr != nil {
+		returnErrJson(fetchErr, w, c)
+		return
+	}
+	writeJson(w, scores, c)
+}
+
+func handleCalcStats(w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {
 }
 
 func cleanDatastore(w http.ResponseWriter, r *http.Request, cacheGet chan lolCache.Request, cachePut chan lolCache.Response) {
@@ -229,14 +241,15 @@ func cleanDatastore(w http.ResponseWriter, r *http.Request, cacheGet chan lolCac
 		returnErrJson(err, w, c)
 	}
 	datastore.DeleteMulti(c, keys)
-
 }
 
 func returnEmptyJson(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte("{}"))
 }
 
 func returnErrJson(e error, w http.ResponseWriter, context appengine.Context) {
+	w.Header().Set("Content-Type", "application/json")
 	msg := fmt.Sprintf("{\"error\": \"%s\"}", e.Error())
 	context.Infof("Returning Error: %s", msg)
 	w.Write([]byte(msg))

@@ -144,3 +144,13 @@ type Player struct {
 	SummonerName  string // Summoner name of the player
 	Side          string // blue or purple
 }
+
+type LFScores struct {
+	SummonerId int64
+	Tags       map[string]LFScore
+}
+
+type LFScore struct {
+	Tag   string
+	Score float64
+}

@@ -276,12 +276,12 @@ func persistGames(games lapi.RecentGames, id int64, persist PersistanceProvider)
 func GetSummonerRankedData(s lapi.Summoner, get chan Request, put chan Response, c appengine.Context) (srd SummonerRankedData, e error) {
 	// 1. Check for cached data
 	value, getErr := goGet(Request{Type: "rankedData", Key: s.Id}, get)
-	client := getClient(c)
-	api := &lapi.LolFetcher{Get: client.Get, Log: c}
 	if getErr != nil {
 		srd.Summoner = s
 		srd.RankedTeamLeagues = make(map[string]lapi.League)
 
+		client := getClient(c)
+		api := &lapi.LolFetcher{Get: client.Get, Log: c}
 		// Async get stats & leagues together.
 		getStats := make(chan lapi.ApiAsyncResponse)
 		getLeagues := make(chan lapi.ApiAsyncResponse)
@@ -357,6 +357,54 @@ func GetSummonerRankedData(s lapi.Summoner, get chan Request, put chan Response,
 
 	// If all else fails, return an empty object.
 	return srd, errors.New("Failed to get stats.")
+}
+
+func GetLFScores(summonerId int64, get chan Request, put chan Response, c appengine.Context, persist PersistanceProvider) (a LFScores, e error) {
+	var summoner lapi.Summoner
+	gSummoner, e := goGet(Request{Type: "summoner", Key: summonerId}, get)
+	if e != nil {
+		fSummoner := &lapi.Summoner{Id: summonerId}
+		e = persist.GetSummoner(fSummoner)
+		if e != nil {
+			// For now don't get scores unless you have at least previously fetched the player.
+			return LFScores{}, e
+		}
+		summoner = *fSummoner
+	} else {
+		summoner = gSummoner.(lapi.Summoner)
+	}
+
+	srd, e := GetSummonerRankedData(summoner, get, put, c)
+	if e != nil {
+		return LFScores{}, e
+	}
+	taggedChamps := map[string][]lapi.AggregatedStats{}
+	// Create tag groups
+	for _, cStat := range srd.Champions {
+		champ := allChampions[cStat.Id]
+		for _, tag := range champ.Tags {
+			if _, ok := taggedChamps[tag]; !ok {
+				taggedChamps[tag] = []lapi.AggregatedStats{}
+			}
+			taggedChamps[tag] = append(taggedChamps[tag], cStat.Stats)
+		}
+	}
+	scores := LFScores{SummonerId: summonerId, Tags: make(map[string]LFScore)}
+	// Process results
+	//for tag, stats := range taggedChamps {
+	//	totalKills := 0
+	//	totalDeaths := 0
+	//	totalAssists := 0
+	//	totalGames := 0
+	//	totalGold := 0
+	//	totalMinions := 0
+	//	for _, stat := range stats {
+	//		totalKills += stat.
+	//	}
+	//}
+	// KDAMod * GoldMod * MinionMod
+
+	return scores, nil
 }
 
 // Generic function to request data from cache.

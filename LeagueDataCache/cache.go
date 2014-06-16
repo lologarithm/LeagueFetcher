@@ -148,6 +148,11 @@ func fetchCache(request Request) {
 				response.Ok = true
 				response.Value = summoner
 			}
+		} else if iKey, ok := request.Key.(int64); ok {
+			if summoner, ok := allSummonersById[iKey]; ok {
+				response.Ok = true
+				response.Value = summoner
+			}
 		}
 	case "champion":
 		if intKey, ok := request.Key.(int64); ok {

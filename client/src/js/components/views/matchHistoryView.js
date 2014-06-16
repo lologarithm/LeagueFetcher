@@ -4,10 +4,11 @@ define(['jquery', 'react', 'moment', 'js/stores/summonerStore.js', '/js/componen
 
 		render: function () {
 			if(this.props.name !== '') {
-				return <div style={{'width':'500px', 'margin':'10px auto 0'}}>
+				return this.transferPropsTo(
+						<div>
 							<h3>Match History</h3>
-							<MatchHistoryPanel className="margin-top-m" name={this.props.name} searchName={this.props.searchName} />
-						</div>;
+							<MatchHistoryPanel style={{'width':'50%'}} className="margin-top-m" name={this.props.name} searchName={this.props.searchName} />
+						</div>);
 			} else {
 				return <div></div>;
 			}

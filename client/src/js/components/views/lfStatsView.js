@@ -11,32 +11,14 @@ function ($, React, moment, summonerStore, RankedStatsElement) {
 		
 		render: function () {
 			if (this.props.name !== '') {
-				if(summonerStore.getRankedData(this.props.name) && summonerStore.getRankedData(this.props.name).Champions && summonerStore.getRankedData(this.props.name).Champions.length > 0) {
-					var elements = summonerStore.getRankedData(this.props.name).Champions.sort(this.sortByMostPlayed).map(function (a) {
-						return <RankedStatsElement data={a} />;
-					})
-
-
-					return this.transferPropsTo(
-							<div style={{}} >
-								<h3>Ranked Stats</h3>
-								<div className="margin-top-m">
-									{elements}
-								</div>
-							</div>);
-				} else {
-					return <div style={{}}>
-								<h3>Ranked Stats</h3>
-								<span>No ranked games found</span>
-							</div>;
-				}
+				return this.transferPropsTo(
+					<div>
+						{"League Fetcher's stats module is coming! Keep an eye out in the coming weeks!"}
+					</div>
+				);
 			} else {
 				return <div></div>;
 			}
-		},
-
-		sortByMostPlayed: function (a,b) {
-			return a.Stats.TotalSessionsPlayed > b.Stats.TotalSessionsPlayed ? -1 : 1;
 		},
 
 		componentDidMount: function ( ){

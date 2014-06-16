@@ -20,6 +20,10 @@ input {
 	transition: width .25s;
 }
 
+h3 {
+	margin: 0px;
+}
+
 
 /* Flex Stuff */
 .flex1 {
@@ -208,3 +212,45 @@ input {
 	-ms-user-select: none;
 	user-select: none;
 }
+
+
+/* Vertical Tab Manager */
+.verticalTabManager.left {
+	flex-direction: row-reverse;
+}
+.verticalTabManager.right {
+	flex-direction: row;
+}
+.verticalTabManager.left .tabContents {
+	border:1px #ccc solid;
+	border-left: none;
+	padding:20px;
+}
+.verticalTabManager > .tabItems > div {
+	padding: 5px;
+	background-color: #fff;
+}
+.verticalTabManager.left > .tabItems > div {
+	border-right: 1px #ccc solid;
+	padding-right:20px;
+}
+.verticalTabManager.right > .tabItems > div {
+	border-left: 1px #ccc solid;
+	padding-left:20px;
+}
+.verticalTabManager > .tabItems > .selected {
+	border-top: 1px #ccc solid;
+	border-bottom: 1px #ccc solid;
+	background-color: transparent;
+}
+.verticalTabManager.left > .tabItems > .selected {
+	border-left: 2px red solid;
+	border-right: none;
+}
+.verticalTabManager.right > .tabItems > .selected {
+	border-right: 2px red solid;
+	border-right: none;
+}
+
+
+

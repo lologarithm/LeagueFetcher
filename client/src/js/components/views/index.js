@@ -1,5 +1,14 @@
 /** @jsx React.DOM */
-define(['jquery', 'react', 'js/components/views/matchHistoryView.js', 'js/components/views/rankedStatsView.js'], function ($, React, MatchHistoryView, RankedStatsView) {
+define([
+'jquery', 
+'react', 
+'js/components/views/generalView.js',
+'js/components/views/matchHistoryView.js',
+'js/components/views/rankedStatsView.js',
+'js/components/views/lfStatsView.js',
+'js/components/controls/controls/tabManager/verticalTabManager.js'], 
+
+function ($, React, GeneralView, MatchHistoryView, RankedStatsView, LFStatsView, TabManager) {
 	var IndexView = React.createClass({
 		getInitialState : function () {
 			return {
@@ -10,7 +19,6 @@ define(['jquery', 'react', 'js/components/views/matchHistoryView.js', 'js/compon
 
 		render: function () {
 			var style = this.state.championName !== '' ? {'margin': '0px auto', 'width':'125px'} : {'width':'500px', 'margin': '0px auto'};
-			//
 
 			return <div className="flexContainer flexColumn">
 						<div className='flexContainer flexColumn flexNone marginAnimate' style={{'width':'500px', 'margin':'50px auto 20px'}}>
@@ -23,10 +31,15 @@ define(['jquery', 'react', 'js/components/views/matchHistoryView.js', 'js/compon
 								<button type="button" className='flexNone btn btn-primary' style={{'margin-left':'3px'}} onClick={this.onClick} >Search</button>
 							</div>
 						</div>
-						<div className='flexContainer flex1'>
+						<TabManager style={{'display':(this.state.championName !== '' ? '':'none'),'width':'95%','max-width':'1200px', 'margin':'0 auto 20px', 'background-color':'#e9eaed'}} 
+									className='left' 
+									tabs={['General', 'Match History', 'Ranked Stats', 'LF Stats']}>
+
+							<GeneralView className="flex1" name={this.state.championName} searchName={this.commitSearch} />
 							<MatchHistoryView className="flex1" name={this.state.championName} searchName={this.commitSearch} />
 							<RankedStatsView className="flex1" name={this.state.championName} searchName={this.commitSearch} />
-						</div>
+							<LFStatsView className="flex1" name={this.state.championName} searchName={this.commitSearch} />
+						</TabManager>
 					</div>
 		},
 

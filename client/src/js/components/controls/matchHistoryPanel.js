@@ -11,7 +11,7 @@ function ($, React, moment, summonerStore, matchStore, MatchHistoryElement, Matc
 		},
 
 		render: function () {
-			if(summonerStore.getMatchHistory(this.props.name).Games && summonerStore.getMatchHistory(this.props.name).Games.length > 0) {
+			if(summonerStore.getMatchHistory(this.props.name) && summonerStore.getMatchHistory(this.props.name).Games && summonerStore.getMatchHistory(this.props.name).Games.length > 0) {
 				var popover = summonerStore.getMatchHistory(this.props.name).Games.filter($.proxy(function (a) {
 					return this.state.target == a.GameId;
 				}, this)).map($.proxy(function (a) {

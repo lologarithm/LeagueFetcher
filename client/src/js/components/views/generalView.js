@@ -107,7 +107,7 @@ function ($, React, moment, summonerStore, RankedStatsElement, tiersAndDivions) 
 		renderTopChamps: function (data) {
 			if(data.Champions) {
 				var renderedElm = data.Champions.filter(function (a){ 
-					return a.Stats.TotalSessionsPlayed >= 5 && a.ChampionName !== '';
+					return a.Stats.TotalSessionsPlayed >= 5 && a.ChampionName !== 'Total';
 				})
 				.sort(this.sortByKDA)
 				.filter(function (a,i) {

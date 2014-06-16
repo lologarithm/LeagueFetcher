@@ -2,9 +2,11 @@
 package LeagueDataCache
 
 import (
-	lapi "github.com/lologarithm/LeagueFetcher/LeagueApi"
+	"fmt"
 	"strings"
 	"time"
+
+	lapi "github.com/lologarithm/LeagueFetcher/LeagueApi"
 )
 
 const (
@@ -19,11 +21,11 @@ type PersistanceProvider interface {
 	GetSummoner(*lapi.Summoner) error
 	GetSummonerByName(*lapi.Summoner) error
 	GetSummoners([]int64) ([]lapi.Summoner, error)
-	//PutMatch(lapi.Game)
-	PutObject(string, string, int64, interface{}) error
-	PutObjects(string, []string, []int64, []interface{}) error
-	GetObject(string, string, interface{}) error
-	GetMatchesByIndex(int64) ([]lapi.Game, error)
+	GetMatchDetail(MatchKey, *MatchDetail) error
+	PutMatchDetail(MatchKey, MatchDetail) error
+	PutMatchDetails(int64, []MatchDetail) error
+	GetMatchDetails(int64) ([]MatchDetail, error)
+	GetMatchHistory(int64) (MatchHistory, error)
 }
 
 // TODO: Maybe merge the request/response together?
@@ -48,8 +50,8 @@ var allSummonersById map[int64]lapi.Summoner
 var allChampions map[int64]lapi.Champion
 var allLeagues map[int64]lapi.League
 var allTeams map[int64]lapi.Team
-var allGames map[MatchKey]lapi.Game
-var gamesBySummoner map[int64][]lapi.Game
+var allGames map[MatchKey]cachedMatchDetail
+var gamesBySummoner map[int64][]cachedMatchDetail
 var allRankedData map[int64]SummonerRankedData
 var allItems *lapi.ItemList
 
@@ -79,25 +81,32 @@ func putCache(resp Response) {
 	case "games":
 		if matches, ok := resp.Value.(lapi.RecentGames); ok {
 			for _, match := range matches.Games {
-				match.ExpireTime = getExpireTime(false)
-				key := MatchKey{MatchId: match.GameId, SummonerId: matches.SummonerId}
-				// Don't put the match into the list of games for the summoner if it's already cached.
-				if _, ok := allGames[key]; !ok {
-					if _, ok := gamesBySummoner[matches.SummonerId]; !ok {
-						gamesBySummoner[matches.SummonerId] = []lapi.Game{}
-					}
-					gamesBySummoner[matches.SummonerId] = append(gamesBySummoner[matches.SummonerId], match)
+				md, cErr := convertGameToMatchDetail(match)
+				if cErr != nil {
+					fmt.Printf("Failed to convert game to MD: %s\n", cErr.Error())
+					continue
 				}
-				// Always re-cache here for updated match time.
-				allGames[key] = match
+				cachedMatch := md.toCachedMatch(matches.SummonerId)
+				key := MatchKey{MatchId: match.GameId, SummonerId: matches.SummonerId}
+				putMatchInCache(key, cachedMatch)
+			}
+		}
+	case "matchdetails":
+		summonerId, ok := resp.Key.(int64)
+		if !ok {
+			return
+		}
+		if matches, ok := resp.Value.([]MatchDetail); ok {
+			for _, match := range matches {
+				cachedMatch := match.toCachedMatch(summonerId)
+				key := MatchKey{MatchId: match.GameId, SummonerId: summonerId}
+				putMatchInCache(key, cachedMatch)
 			}
 		}
 	case "game":
-		break
-		// Fix this up later if we ever use it.
 		if key, ok := resp.Key.(MatchKey); ok {
-			if game, ok := resp.Value.(lapi.Game); ok {
-				allGames[key] = game
+			if game, ok := resp.Value.(MatchDetail); ok {
+				putMatchInCache(key, game.toCachedMatch(key.SummonerId))
 			}
 		}
 	case "rankedData":
@@ -106,6 +115,27 @@ func putCache(resp Response) {
 			allRankedData[data.Id] = data
 		}
 	}
+}
+
+func putMatchInCache(key MatchKey, cachedMatch cachedMatchDetail) {
+	// Don't put the match into the list of games for the summoner if it's already cached.
+	if _, ok := allGames[key]; !ok {
+		if _, ok := gamesBySummoner[key.SummonerId]; !ok {
+			gamesBySummoner[key.SummonerId] = []cachedMatchDetail{cachedMatch}
+		} else {
+			for ind, m := range gamesBySummoner[key.SummonerId] {
+				if m.PlayedDate < cachedMatch.PlayedDate {
+					gamesBySummoner[key.SummonerId] = append(append(gamesBySummoner[key.SummonerId][:ind], cachedMatch), gamesBySummoner[key.SummonerId][ind+1:]...)
+					break
+				} else if ind == len(gamesBySummoner[key.SummonerId])-1 {
+					gamesBySummoner[key.SummonerId] = append(gamesBySummoner[key.SummonerId], cachedMatch)
+					break
+				}
+			}
+		}
+	}
+	// Always re-cache here for updated match time.
+	allGames[key] = cachedMatch
 }
 
 func fetchCache(request Request) {
@@ -138,12 +168,12 @@ func fetchCache(request Request) {
 			// If last fetch of game history is old, refetch game history.
 			if games, ok := gamesBySummoner[intKey]; ok {
 				checkExpireMatch := allGames[MatchKey{SummonerId: intKey, MatchId: games[0].GameId}]
-				if len(games) > 0 && checkExpireMatch.ExpireTime > time.Now().Unix() {
+				if len(games) > 0 && checkExpireMatch.CacheExpireDate > time.Now().Unix() {
 					sliceEnd := 10
 					if len(games) < 10 {
 						sliceEnd = len(games)
 					}
-					matchHistory, fetchErr := convertGamesToMatchHistory(intKey, games[0:sliceEnd])
+					matchHistory, fetchErr := convertCachedMatchDetailsToHistory(games[0:sliceEnd])
 					if fetchErr == nil {
 						response.Value = matchHistory
 						response.Ok = true
@@ -154,11 +184,15 @@ func fetchCache(request Request) {
 	case "game":
 		if key, ok := request.Key.(MatchKey); ok {
 			if game, ok := allGames[key]; ok {
-				gameDetail, fErr := convertGameToMatchDetail(game)
-				if fErr == nil {
-					response.Value = gameDetail
+				gd, err := game.ToMatchDetail()
+				if err == nil {
+					response.Value = gd
 					response.Ok = true
+				} else {
+					fmt.Printf("Convert to MatchDetail failed: %s", err.Error())
 				}
+			} else {
+				fmt.Printf("GameKey not in allGames: %s\n", key.String())
 			}
 		}
 	case "team":
@@ -187,10 +221,10 @@ func SetupCache() {
 	loadSummoners(summonerCache)
 
 	if allGames == nil {
-		allGames = make(map[MatchKey]lapi.Game)
+		allGames = make(map[MatchKey]cachedMatchDetail)
 	}
 	if gamesBySummoner == nil {
-		gamesBySummoner = make(map[int64][]lapi.Game)
+		gamesBySummoner = make(map[int64][]cachedMatchDetail)
 	}
 	if allRankedData == nil {
 		allRankedData = make(map[int64]SummonerRankedData)

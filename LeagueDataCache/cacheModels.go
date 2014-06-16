@@ -1,7 +1,9 @@
 package LeagueDataCache
 
 import (
+	"encoding/json"
 	"fmt"
+
 	lapi "github.com/lologarithm/LeagueFetcher/LeagueApi"
 )
 
@@ -52,55 +54,6 @@ type MatchSimple struct {
 	Side          string     // blue or purple
 }
 
-func NewMatchSimpleFromGame(g lapi.Game) (lm MatchSimple) {
-	lm.CreateDate = g.CreateDate
-	lm.GameId = g.GameId
-	lm.GameMode = g.GameMode
-	lm.GameType = g.GameType
-	lm.Invalid = g.Invalid
-	lm.IpEarned = g.IpEarned
-	lm.MapId = g.MapId
-	if g.TeamId == 100 {
-		lm.Side = "blue"
-	} else {
-		lm.Side = "purple"
-	}
-	lm.Stats = MatchStats{Assists: g.Stats.Assists, ChampionsKilled: g.Stats.ChampionsKilled, NumDeaths: g.Stats.NumDeaths, Win: g.Stats.Win}
-	lm.SubType = g.SubType
-	return
-}
-
-func NewMatchDetailsFromGame(g lapi.Game) (lmd MatchDetail) {
-	lmd.CreateDate = g.CreateDate
-	lmd.GameId = g.GameId
-	lmd.GameMode = g.GameMode
-	lmd.GameType = g.GameType
-	lmd.Invalid = g.Invalid
-	lmd.IpEarned = g.IpEarned
-	lmd.MapId = g.MapId
-	if g.TeamId == 100 {
-		lmd.Side = "blue"
-	} else {
-		lmd.Side = "purple"
-	}
-	lmd.SubType = g.SubType
-	players := []Player{}
-	for _, player := range g.FellowPlayers {
-		p := Player{ChampionId: player.ChampionId, SummonerId: player.SummonerId}
-		if player.TeamId == 100 {
-			p.Side = "blue"
-		} else {
-			p.Side = "purple"
-		}
-		players = append(players, p)
-	}
-	lmd.FellowPlayers = players
-	lmd.Spell1 = g.Spell1
-	lmd.Spell2 = g.Spell2
-	lmd.Stats = g.Stats
-	return
-}
-
 type MatchStats struct {
 	Assists         int
 	ChampionsKilled int
@@ -110,6 +63,7 @@ type MatchStats struct {
 
 type MatchDetail struct {
 	ChampionName  string        // Champion ID associated with game.
+	ChampionImage string        // URL to fetch the image of the champion.
 	CreateDate    int64         // Date that end game data was recorded, specified as epoch milliseconds.
 	FellowPlayers []Player      // Other players associated with the game.
 	GameId        int64         // Game ID.
@@ -121,9 +75,60 @@ type MatchDetail struct {
 	Spell1        int           // ID of first summoner spell.
 	Spell2        int           // ID of second summoner spell.
 	Stats         lapi.RawStats // Statistics associated with the game for this summoner.
-	Items         []ItemDetail
-	SubType       string // Game sub-type. (legal values: NONE, NORMAL, BOT, RANKED_SOLO_5x5, RANKED_PREMADE_3x3, RANKED_PREMADE_5x5, ODIN_UNRANKED, RANKED_TEAM_3x3, RANKED_TEAM_5x5, NORMAL_3x3, BOT_3x3, CAP_5x5, ARAM_UNRANKED_5x5, ONEFORALL_5x5, FIRSTBLOOD_1x1, FIRSTBLOOD_2x2, SR_6x6, URF, URF_BOT)
-	Side          string // blue or purple
+	Items         []ItemDetail  // List of items bought by player.
+	SubType       string        // Game sub-type. (legal values: NONE, NORMAL, BOT, RANKED_SOLO_5x5, RANKED_PREMADE_3x3, RANKED_PREMADE_5x5, ODIN_UNRANKED, RANKED_TEAM_3x3, RANKED_TEAM_5x5, NORMAL_3x3, BOT_3x3, CAP_5x5, ARAM_UNRANKED_5x5, ONEFORALL_5x5, FIRSTBLOOD_1x1, FIRSTBLOOD_2x2, SR_6x6, URF, URF_BOT)
+	Side          string        // blue or purple
+}
+
+func (md MatchDetail) toCachedMatch(summonerId int64) (cmd cachedMatchDetail) {
+	cmd.SummonerId = summonerId
+	cmd.GameId = md.GameId
+	cmd.PlayedDate = md.CreateDate
+	jData, mErr := json.Marshal(md)
+	if mErr != nil {
+		return
+	}
+	cmd.Data = jData
+	cmd.CacheExpireDate = getExpireTime(false)
+	return
+}
+
+func (g MatchDetail) toMatchSimple() (ms MatchSimple) {
+	ms.CreateDate = g.CreateDate
+	ms.ChampionName = g.ChampionName
+	ms.ChampionImage = g.ChampionImage
+	ms.GameId = g.GameId
+	ms.GameMode = g.GameMode
+	ms.GameType = g.GameType
+	ms.Invalid = g.Invalid
+	ms.IpEarned = g.IpEarned
+	ms.MapId = g.MapId
+	ms.Side = g.Side
+	ms.Stats = MatchStats{Assists: g.Stats.Assists, ChampionsKilled: g.Stats.ChampionsKilled, NumDeaths: g.Stats.NumDeaths, Win: g.Stats.Win}
+	ms.SubType = g.SubType
+	return
+}
+
+type cachedMatchDetail struct {
+	SummonerId      int64
+	GameId          int64
+	PlayedDate      int64
+	CacheExpireDate int64
+	Data            []byte
+}
+
+func (cmd cachedMatchDetail) ToMatchDetail() (md MatchDetail, e error) {
+	e = json.Unmarshal(cmd.Data, &md)
+	return
+}
+
+func (cmd cachedMatchDetail) ToMatchSimple() (ms MatchSimple, e error) {
+	g, err := cmd.ToMatchDetail()
+	return g.toMatchSimple(), err
+}
+
+func (cmd cachedMatchDetail) KeyString() string {
+	return fmt.Sprintf("%d.%d", cmd.GameId, cmd.SummonerId)
 }
 
 type ItemDetail struct {

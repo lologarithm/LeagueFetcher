@@ -3,6 +3,9 @@ README.md
 League Fetcher Appengine Server
 ==============
 
+Status: DEAD
+Project died after league APIs were changed and we were unable to manage tournaments the way that was planned.
+
 Setup
 --------------
 Get riot API key from developer.riotgames.com
